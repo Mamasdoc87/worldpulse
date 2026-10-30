@@ -165,7 +165,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
   <div style="font-size:12px;color:#6b7f99;margin-bottom:20px;line-height:1.6;">Live global intelligence — real news from live APIs, translated by Claude AI.</div>
 
   <div style="font-size:10px;font-weight:600;letter-spacing:1px;color:#6b7f99;text-transform:uppercase;margin-bottom:6px;">Anthropic API Key <span style="color:#e63946">* required</span></div>
-  <input id="k-anthropic" type="password" placeholder="sk-ant-api03-..." style="width:100%;background:#0a0d12;border:1px solid #1e2d42;border-radius:7px;padding:10px 13px;color:#e8edf4;font-family:monospace;font-size:12px;outline:none;margin-bottom:6px;box-sizing:border-box;">
+  <input id="k-anthropic" type="text" autocomplete="off"  autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" name="wp-k-anthropic-x" placeholder="sk-ant-api03-..." style="-webkit-text-security:disc;width:100%;background:#0a0d12;border:1px solid #1e2d42;border-radius:7px;padding:10px 13px;color:#e8edf4;font-family:monospace;font-size:12px;outline:none;margin-bottom:6px;box-sizing:border-box;">
+  <button onclick="wpTestAnthropic()" style="width:100%;margin:2px 0 4px;padding:8px;border-radius:6px;border:1px solid #1e2d42;background:#1a2030;color:#e8edf4;font-size:12px;cursor:pointer;">Test this Anthropic key</button><div id="k-anthropic-res" style="font-size:12px;margin-bottom:8px;"></div>
+
   <div style="font-size:11px;color:#3a4a60;padding:8px 10px;background:#1a2030;border-radius:6px;border-left:3px solid #023e8a;margin-bottom:14px;">Get free at <a href="https://console.anthropic.com" target="_blank" style="color:#00b4d8;">console.anthropic.com</a> &rarr; API Keys</div>
 
   <div style="font-size:10px;font-weight:600;letter-spacing:1px;color:#6b7f99;text-transform:uppercase;margin-bottom:6px;">TheNewsAPI Key <span style="color:#6b7f99;font-weight:400">(optional)</span></div>
@@ -196,7 +198,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
   <div style="background:#1a2030;border:1px solid #243552;border-radius:8px;padding:14px;margin-bottom:16px;">
     <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:#6b7f99;text-transform:uppercase;margin-bottom:8px;">&#9729; Cloud Sync — access keys from any device</div>
     <div style="font-size:11px;color:#3a4a60;line-height:1.6;margin-bottom:10px;">Store keys in a private <a href="https://gist.github.com" target="_blank" style="color:#00b4d8;">GitHub Gist</a>. Get token at <a href="https://github.com/settings/tokens/new?scopes=gist&description=WorldPulse" target="_blank" style="color:#00b4d8;">github.com/settings/tokens</a> — select <strong style="color:#6b7f99;">gist</strong> scope only.</div>
-    <input id="gh-token" type="password" placeholder="GitHub token: ghp_..." style="width:100%;background:#0a0d12;border:1px solid #1e2d42;border-radius:6px;padding:9px 12px;color:#e8edf4;font-family:monospace;font-size:12px;outline:none;margin-bottom:7px;box-sizing:border-box;">
+    <input id="gh-token" type="text" autocomplete="off"  autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" name="wp-gh-token-x" placeholder="GitHub token: ghp_..." style="-webkit-text-security:disc;width:100%;background:#0a0d12;border:1px solid #1e2d42;border-radius:6px;padding:9px 12px;color:#e8edf4;font-family:monospace;font-size:12px;outline:none;margin-bottom:7px;box-sizing:border-box;">
     <input id="gh-gist-id" type="text" placeholder="Gist ID (auto-filled after first Save)" style="width:100%;background:#0a0d12;border:1px solid #1e2d42;border-radius:6px;padding:9px 12px;color:#e8edf4;font-family:monospace;font-size:12px;outline:none;margin-bottom:10px;box-sizing:border-box;">
     <div style="display:flex;gap:8px;">
       <button onclick="wpSaveCloud()" style="flex:1;background:#2a9d8f;color:#fff;border:none;border-radius:6px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">&#9729; Save to Cloud</button>
@@ -664,6 +666,15 @@ function wpBakeKeys() {
 }
 
 // TESTKEY
+function wpTestAnthropic(){
+  var r=document.getElementById('k-anthropic-res'),k=(document.getElementById('k-anthropic').value||'').trim();
+  if(!k){r.style.color='#e63946';r.textContent='Paste a key first.';return;}
+  if(k.indexOf('sk-ant-api')!==0){r.style.color='#e63946';r.textContent='This is not an API key. It starts with "'+k.slice(0,10)+'" but must start with sk-ant-api03- (from console.anthropic.com > API Keys).';return;}
+  r.style.color='#f4a261';r.textContent='Testing...';
+  fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:10,messages:[{role:'user',content:'ok'}]})})
+  .then(function(x){return x.json().then(function(d){if(d.error){r.style.color='#e63946';r.textContent='Rejected: '+d.error.message;}else{r.style.color='#5ecfa0';r.textContent='Key works. Now press Save to Cloud, then Launch.';}});})
+  .catch(function(e){r.style.color='#e63946';r.textContent='Error: '+e.message;});
+}
 function testKey() {
   var k = (KEYS && KEYS.anthropic) ? KEYS.anthropic : '';
   if(!k) { alert('KEYS.anthropic is empty - key not saved properly'); return; }
@@ -1415,7 +1426,7 @@ async function loadBrief(id){
     var a=articles.find(function(x){return x.id===id;});
     if(!a)return;
     try{var t=await claude('Write a 4-sentence intelligence brief on this real news story: "'+a.title+'" ('+a.country+', '+a.category+', '+a.sourceName+'). Cover context, key actors, significance, and what happens next. Plain prose, no bullet points.');briefs[id]=t;}
-    catch(e){briefs[id]='Brief unavailable.';}
+    catch(e){briefs[id]='Brief unavailable: '+(e&&e.message?e.message:'error')+(/x-api-key|authentication/i.test(String(e&&e.message))?' - your Anthropic key is invalid; open Keys and paste a new one.':'');}
     renderFeed();
   }
 }
