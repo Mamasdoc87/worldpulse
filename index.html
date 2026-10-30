@@ -457,6 +457,7 @@ function wpSaveCloud() {
   if(!token) { wpCloudMsg('Enter your GitHub token first.', false); return; }
   wpCloudMsg('Saving to cloud...', true);
   var keys = wpGetKeys();
+  try { delete keys.anthropic; } catch(e){}
   var body = JSON.stringify({
     description: 'WorldPulse API Keys',
     public: false,
@@ -475,7 +476,7 @@ function wpSaveCloud() {
       if(d.id) {
         document.getElementById('gh-gist-id').value = d.id;
         try { localStorage.setItem('wp_gh_token',token); localStorage.setItem('wp_gh_gist',d.id); } catch(e){}
-        wpCloudMsg('Saved to cloud! Gist ID: '+d.id, true);
+        wpCloudMsg('Saved to cloud (without the Anthropic key). Gist ID: '+d.id, true);
       } else { wpCloudMsg('Error: '+(d.message||'Unknown'), false); }
     } catch(e) { wpCloudMsg('Parse error: '+e.message, false); }
   };
@@ -500,6 +501,9 @@ function wpLoadCloud() {
       var d = JSON.parse(xhr.responseText);
       if(d.files && d.files['worldpulse-keys.json']) {
         var keys = JSON.parse(d.files['worldpulse-keys.json'].content);
+        var localAnth = (document.getElementById('k-anthropic').value||'').trim();
+        if(!localAnth){ try{ localAnth = (JSON.parse(localStorage.getItem('wp_keys')||'{}').anthropic)||''; }catch(e){} }
+        keys.anthropic = localAnth;
         wpFillKeys(keys);
         // Also set KEYS object directly
         if(keys.anthropic)    KEYS.anthropic    = keys.anthropic;
@@ -510,7 +514,7 @@ function wpLoadCloud() {
         if(keys.alphavantage) KEYS.alphavantage = keys.alphavantage;
         if(keys.mediastack)   KEYS.mediastack   = keys.mediastack;
         try { localStorage.setItem('wp_keys', JSON.stringify(keys)); localStorage.setItem('wp_gh_token',token); localStorage.setItem('wp_gh_gist',gistId); } catch(e){}
-        wpCloudMsg('Keys loaded! Click Launch.', true);
+        wpCloudMsg('Keys loaded (the Anthropic key stays on each device - paste it once, then test it). Click Launch.', true);
         wpOkMsg('All keys loaded from cloud. Click Launch WorldPulse.');
       } else if(d.message) {
         wpCloudMsg('GitHub error: '+d.message, false);
