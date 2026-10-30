@@ -134,6 +134,27 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 ::-webkit-scrollbar{width:4px;}
 ::-webkit-scrollbar-thumb{background:var(--br);border-radius:2px;}
 
+
+/* mobile layout */
+.m-only{display:none;}
+@media(max-width:950px){
+ html,body{overflow-x:hidden;}
+ #app{height:auto;min-height:100dvh;overflow:visible;}
+ .topbar{position:sticky;top:0;z-index:50;padding:0 10px;flex-wrap:nowrap;}
+ .topbar .clock,#fetch-status,.live-badge{display:none;}
+ .m-only{display:inline-block;}
+ .layout{flex-direction:column;overflow:visible;}
+ .main{overflow:visible;}
+ .feed-scroll{overflow:visible;flex:none;}
+ .feed-row{flex-wrap:wrap;}
+ .search-in{min-width:140px;}
+ .sidebar{display:flex;flex-direction:row;overflow-x:auto;overflow-y:hidden;width:auto;border-right:none;border-bottom:1px solid var(--br);padding:6px;gap:6px;-webkit-overflow-scrolling:touch;order:-1;}
+ .sidebar .sec-t,.sidebar .sdiv{display:none;}
+ .sidebar .fb{width:auto;white-space:nowrap;flex-shrink:0;border:1px solid var(--br);border-radius:14px;padding:6px 11px;}
+ .rpanel{display:block;width:auto;border-left:none;border-top:1px solid var(--br);overflow:visible;padding:14px;}
+ .analyst-resp,#macro-result{max-height:none !important;}
+ input,textarea{font-size:16px !important;}
+}
 </style>
 </head>
 <body>
@@ -209,6 +230,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     <div style="display:flex;align-items:center;gap:12px;">
       <span id="fetch-status" style="font-size:11px;color:var(--muted);"></span>
       <button onclick="testKey()" style="font-size:10px;color:var(--muted);background:none;border:1px solid var(--br);padding:2px 7px;border-radius:4px;cursor:pointer;">Test Key</button>
+      <button class="key-btn m-only" onclick="document.getElementById('rpanel').scrollIntoView({behavior:'smooth'})">&#129504; Analyst</button>
       <button class="key-btn" id="keybtn">&#9881; Keys</button>
       <span class="clock" id="clock"></span>
     </div>
@@ -294,7 +316,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
       </div></div>
     </div>
 
-    <div class="rpanel">
+    <div class="rpanel" id="rpanel">
       <div class="rpt">Regions</div>
       <div class="rmap">
         <div class="rcard" onclick="setReg('Europe',this)"><div class="rf">&#127466;&#127482;</div><div class="rn">Europe</div><div class="rc" id="rn-Europe">—</div></div>
