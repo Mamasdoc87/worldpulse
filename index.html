@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorldPulse</title>
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+:root{--bg:#0a0d12;--s1:#111720;--s2:#1a2030;--br:#1e2d42;--br2:#243552;--ac:#00b4d8;--ac2:#0077b6;--ac3:#023e8a;--gold:#f4a261;--red:#e63946;--green:#2a9d8f;--text:#e8edf4;--muted:#6b7f99;--dim:#3a4a60;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;}
+#setup{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);padding:20px;}
+.sc{background:var(--s1);border:1px solid var(--br2);border-radius:16px;padding:32px;width:100%;max-width:520px;}
+.sc h1{font-family:'Playfair Display',serif;font-size:24px;margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+.dot{width:9px;height:9px;background:var(--ac);border-radius:50%;display:inline-block;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.5)}}
+.sc p{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6;}
+.sc label{display:block;font-size:10px;font-weight:600;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:5px;margin-top:12px;}
+.sc input{width:100%;background:var(--bg);border:1px solid var(--br);border-radius:7px;padding:10px 13px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;}
+.sc input:focus{border-color:var(--ac);}
+.note{font-size:11px;color:var(--dim);line-height:1.6;padding:8px 11px;background:var(--s2);border-radius:6px;border-left:3px solid var(--ac3);margin-top:6px;}
+.note a{color:var(--ac);text-decoration:none;}
+.btn-main{width:100%;background:var(--ac);color:var(--bg);border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:16px;font-family:'Inter',sans-serif;}
+.btn-sec{width:100%;background:none;color:var(--muted);border:1px solid var(--br);border-radius:8px;padding:8px;font-size:12px;cursor:pointer;margin-top:7px;font-family:'Inter',sans-serif;}
+#app{display:none;flex-direction:column;height:100vh;overflow:hidden;}
+.topbar{background:var(--s1);border-bottom:1px solid var(--br);padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:50px;flex-shrink:0;}
+.logo{font-family:'Playfair Display',serif;font-size:18px;font-weight:900;display:flex;align-items:center;gap:8px;}
+.live-badge{font-size:9px;color:var(--red);border:1px solid var(--red);padding:1px 5px;border-radius:2px;letter-spacing:1.5px;font-family:'JetBrains Mono',monospace;}
+.clock{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.key-btn{background:none;border:1px solid var(--br);color:var(--muted);padding:3px 9px;border-radius:5px;cursor:pointer;font-size:11px;font-family:'Inter',sans-serif;}
+.ticker{background:var(--ac3);height:26px;overflow:hidden;position:relative;flex-shrink:0;}
+.ticker-label{position:absolute;left:0;top:0;bottom:0;background:var(--ac);color:var(--bg);font-size:9px;font-weight:700;letter-spacing:2px;padding:0 10px;display:flex;align-items:center;z-index:2;}
+.ticker-track{display:flex;gap:40px;animation:ticker 80s linear infinite;padding-left:90px;white-space:nowrap;align-items:center;height:100%;}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ti{font-size:11px;color:rgba(255,255,255,.88);}
+.ti-src{color:var(--gold);font-weight:600;font-size:10px;margin-right:5px;}
+.layout{display:flex;flex:1;overflow:hidden;}
+.sidebar{width:185px;background:var(--s1);border-right:1px solid var(--br);padding:10px 0;overflow-y:auto;flex-shrink:0;}
+@media(max-width:750px){.sidebar{display:none;}}
+.sec-t{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--muted);text-transform:uppercase;padding:0 12px;margin:10px 0 5px;}
+.fb{display:flex;align-items:center;gap:7px;width:100%;background:none;border:none;color:var(--text);font-size:12px;font-family:'Inter',sans-serif;padding:5px 12px;cursor:pointer;text-align:left;transition:background .15s;}
+.fb:hover{background:var(--s2);}
+.fb.on{background:var(--ac2);color:#fff;}
+.fdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.fc{margin-left:auto;font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;background:var(--s2);padding:1px 5px;border-radius:3px;}
+.fb.on .fc{background:rgba(255,255,255,.15);color:rgba(255,255,255,.7);}
+.sdiv{height:1px;background:var(--br);margin:7px 0;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.feed-top{padding:11px 14px 9px;flex-shrink:0;border-bottom:1px solid var(--br);}
+.feed-row{display:flex;gap:8px;align-items:center;margin-bottom:9px;}
+.search-in{flex:1;background:var(--s1);border:1px solid var(--br);border-radius:7px;padding:8px 12px;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;}
+.search-in:focus{border-color:var(--ac);}
+.search-in::placeholder{color:var(--muted);}
+.fetch-btn{background:var(--ac);color:var(--bg);border:none;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Inter',sans-serif;}
+.fetch-btn:disabled{opacity:.4;cursor:not-allowed;}
+.fetch-btn.sec{background:var(--s2);color:var(--text);border:1px solid var(--br);}
+.chips{display:flex;gap:5px;flex-wrap:wrap;}
+.chip{font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--br);color:var(--muted);cursor:pointer;background:var(--s1);white-space:nowrap;}
+.chip:hover{border-color:var(--ac);color:var(--ac);}
+.chip.on{background:var(--ac2);border-color:var(--ac2);color:#fff;}
+.stats{display:flex;flex-shrink:0;border-bottom:1px solid var(--br);overflow-x:auto;}
+.stat{padding:7px 13px;border-right:1px solid var(--br);flex-shrink:0;}
+.stat-n{font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--ac);font-weight:500;}
+.stat-l{font-size:9px;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;}
+.prog{background:var(--s1);border:1px solid var(--br);border-radius:8px;padding:10px 13px;margin:9px 13px;flex-shrink:0;}
+.prog-hd{font-size:9px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;}
+.log-wrap{max-height:110px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;}
+.ll{display:flex;gap:7px;font-size:11px;}
+.ll-ic{flex-shrink:0;width:13px;text-align:center;}
+.ll.done .ll-tx{color:var(--green);}
+.ll.active .ll-tx{color:var(--ac);}
+.ll.warn .ll-tx{color:var(--gold);}
+.ll.err .ll-tx{color:var(--red);}
+.ll .ll-tx{color:var(--muted);}
+.feed-scroll{flex:1;overflow-y:auto;padding:10px 13px;}
+.cards{display:flex;flex-direction:column;}
+.card{background:var(--s1);border:1px solid var(--br);padding:13px 15px;border-bottom:none;}
+.card:first-child{border-radius:8px 8px 0 0;}
+.card:last-child{border-radius:0 0 8px 8px;border-bottom:1px solid var(--br);}
+.card:only-child{border-radius:8px;border-bottom:1px solid var(--br);}
+.card:hover{background:var(--s2);}
+.card.hi{border-left:3px solid var(--red);}
+.cm{display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap;}
+.stag{font-size:9px;font-weight:700;letter-spacing:.8px;padding:2px 6px;border-radius:3px;text-transform:uppercase;}
+.s-press{background:#1a3a5c;color:#60b4ff;}
+.s-gov{background:#1e3a2a;color:#5ecfa0;}
+.s-federal{background:#3a2a10;color:#f4a261;}
+.s-social{background:#3a1a3a;color:#c084fc;}
+.s-research{background:#1a3a3a;color:#2dd4bf;}
+.ctag{font-size:9px;color:var(--muted);padding:2px 6px;border:1px solid var(--dim);border-radius:3px;text-transform:uppercase;}
+.ltag{font-size:10px;color:var(--gold);font-family:'JetBrains Mono',monospace;}
+.btag{font-size:9px;color:var(--red);font-weight:700;letter-spacing:1px;}
+.atm{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-left:auto;}
+.rl-badge{font-size:9px;color:var(--green);border:1px solid var(--green);padding:1px 5px;border-radius:3px;font-weight:600;}
+.ctitle{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;line-height:1.35;margin-bottom:6px;}
+.ctitle a{color:var(--text);text-decoration:none;}
+.ctitle a:hover{color:var(--ac);}
+.csum{font-size:12px;color:#9dafc8;line-height:1.6;margin-bottom:8px;}
+.cfoot{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.cloc{font-size:11px;color:var(--muted);}
+.csrc{font-size:11px;color:var(--dim);font-style:italic;}
+.abtn{background:none;border:1px solid var(--dim);color:var(--muted);font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;font-family:'Inter',sans-serif;text-decoration:none;display:inline-flex;align-items:center;gap:3px;}
+.abtn:hover{border-color:var(--ac);color:var(--ac);}
+.cexp{margin-top:11px;padding-top:11px;border-top:1px solid var(--br);font-size:12px;color:#8da0b8;line-height:1.75;}
+.empty{display:flex;flex-direction:column;align-items:center;padding:50px 20px;text-align:center;gap:10px;}
+.empty-ic{font-size:36px;opacity:.25;}
+.empty-ti{font-family:'Playfair Display',serif;font-size:17px;color:var(--muted);}
+.empty-su{font-size:12px;color:var(--dim);line-height:1.7;max-width:380px;}
+.rpanel{width:225px;background:var(--s1);border-left:1px solid var(--br);padding:12px;overflow-y:auto;flex-shrink:0;}
+@media(max-width:950px){.rpanel{display:none;}}
+.rpt{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:9px;}
+.rmap{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:14px;}
+.rcard{background:var(--s2);border:1px solid var(--br);border-radius:6px;padding:7px;cursor:pointer;}
+.rcard:hover,.rcard.on{border-color:var(--ac);}
+.rcard.on{background:rgba(0,180,216,.07);}
+.rf{font-size:14px;margin-bottom:1px;}
+.rn{font-size:10px;font-weight:500;}
+.rc{font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.trow{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--br);}
+.tr-k{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);width:14px;}
+.tr-t{font-size:11px;flex:1;}
+.tr-n{font-size:9px;color:var(--green);font-family:'JetBrains Mono',monospace;}
+.analyst-box{background:var(--s2);border:1px solid var(--br);border-radius:8px;padding:11px;margin-top:13px;}
+.macro-connection{background:var(--s2);border:1px solid var(--br);border-radius:6px;padding:8px;margin-bottom:6px;}
+.analyst-in{width:100%;background:var(--bg);border:1px solid var(--br);border-radius:5px;padding:7px 9px;color:var(--text);font-family:'Inter',sans-serif;font-size:12px;outline:none;resize:none;min-height:58px;margin-bottom:7px;}
+.analyst-in:focus{border-color:var(--ac);}
+.analyst-resp{font-size:11px;color:#9dafc8;line-height:1.6;margin-top:8px;max-height:150px;overflow-y:auto;}
+.src-links{display:flex;flex-direction:column;gap:3px;margin-bottom:13px;}
+.src-link{font-size:11px;color:var(--ac);text-decoration:none;padding:3px 0;border-bottom:1px solid var(--br);display:block;}
+.src-link:hover{color:#fff;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin .8s linear infinite;display:inline-block;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--br);border-radius:2px;}
+
+</style>
+</head>
+<body>
+
+<div id="setup" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0a0d12;padding:20px;">
+<div style="background:#111720;border:1px solid #243552;border-radius:16px;padding:32px;width:100%;max-width:500px;">
+  <div style="font-family:Georgia,serif;font-size:24px;font-weight:900;color:#e8edf4;margin-bottom:6px;">&#9679; WorldPulse</div>
+  <div style="font-size:12px;color:#6b7f99;margin-bottom:20px;line-height:1.6;">Live global intelligence — real news from live APIs, translated by Claude AI.</div>
+
+  <div style="font-size:10px;font-weight:600;letter-spacing:1px;color:#6b7f99;text-transform:uppercase;margin-bottom:6px;">Anthropic API Key <span style="color:#e63946">* required</span></div>
+  <input id="k-anthropic" type="password" placeholder="sk-ant-api03-..." style="width:100%;background:#0a0d12;border:1px solid #1e2d42;border-radius:7px;padding:10px 13px;color:#e8edf4;font-family:monospace;font-size:12px;outline:none;margin-bottom:6px;box-sizing:border-box;">
+  <div style="font-size:11px;color:#3a4a60;padding:8px 10px;background:#1a2030;border-radius:6px;border-left:3px solid #023e8a;margin-bottom:14px;">Get free at <a href="https://console.anthropic.com" target="_blank" style="color:#00b4d8;">console.anthropic.com</a> &rarr; API Keys</div>
+
+  <div style="font-size:10px;font-weight:600;letter-spacing:1px;color:#6b7f99;text-transform:uppercase;margin-bottom:6px;">TheNewsAPI Key <span style="color:#6b7f99;font-weight:400">(optional)</span></div>
+  <input id="k-thenews" type="text" placeholder="Your TheNewsAPI token..." style="width:100%;background:#0a0d12;border:1px solid #1e2d42;border-radius:7px;padding:10px 13px;color:#e8edf4;font-family:monospace;font-size:12px;outline:none;margin-bottom:6px;box-sizing:border-box;">
+  <div style="font-size:11px;color:#3a4a60;padding:8px 10px;background:#1a2030;border-radius:6px;border-left:3px solid #023e8a;margin-bottom:14px;"><a href="https://www.thenewsapi.com" target="_blank" style="color:#00b4d8;">thenewsapi.com</a> &rarr; Register free</div>
+
+  <div style="font-size:10px;font-weight:600;letter-spacing:1px;color:#6b7f99;text-transform:uppercase;margin-bottom:6px;">Currents API Key <span style="color:#6b7f99;font-weight:400">(optional)</span></div>
+  <input id="k-currents" type="text" placeholder="Your Currents API key..." style="width:100%;background:#0a0d12;border:1px solid #1e2d42;border-radius:7px;padding:10px 13px;color:#e8edf4;font-family:monospace;font-size:12px;outline:none;margin-bottom:6px;box-sizing:border-box;">
+  <div style="font-size:11px;color:#3a4a60;padding:8px 10px;background:#1a2030;border-radius:6px;border-left:3px solid #023e8a;margin-bottom:14px;"><a href="https://currentsapi.services" target="_blank" style="color:#00b4d8;">currentsapi.services</a> &rarr; Register free (600/day)</div>
+
+  <div style="font-size:10px;font-weight:600;letter-spacing:1px;color:#6b7f99;text-transform:uppercase;margin-bottom:6px;">Newsdata.io Key <span style="color:#6b7f99;font-weight:400">(optional)</span></div>
+  <input id="k-newsdata" type="text" placeholder="Your Newsdata.io key..." style="width:100%;background:#0a0d12;border:1px solid #1e2d42;border-radius:7px;padding:10px 13px;color:#e8edf4;font-family:monospace;font-size:12px;outline:none;margin-bottom:6px;box-sizing:border-box;">
+  <div style="font-size:11px;color:#3a4a60;padding:8px 10px;background:#1a2030;border-radius:6px;border-left:3px solid #023e8a;margin-bottom:14px;"><a href="https://newsdata.io" target="_blank" style="color:#00b4d8;">newsdata.io</a> &rarr; Register free (200/day)</div>
+
+  <div style="font-size:10px;font-weight:600;letter-spacing:1px;color:#6b7f99;text-transform:uppercase;margin-bottom:6px;">Perigon Key <span style="color:#6b7f99;font-weight:400">(optional)</span></div>
+  <input id="k-perigon" type="text" placeholder="Your Perigon key..." style="width:100%;background:#0a0d12;border:1px solid #1e2d42;border-radius:7px;padding:10px 13px;color:#e8edf4;font-family:monospace;font-size:12px;outline:none;margin-bottom:6px;box-sizing:border-box;">
+  <div style="font-size:11px;color:#3a4a60;padding:8px 10px;background:#1a2030;border-radius:6px;border-left:3px solid #023e8a;margin-bottom:14px;"><a href="https://www.goperigon.com" target="_blank" style="color:#00b4d8;">goperigon.com</a> &rarr; Register free</div>
+
+  <div style="font-size:10px;font-weight:600;letter-spacing:1px;color:#6b7f99;text-transform:uppercase;margin-bottom:6px;">Alpha Vantage Key <span style="color:#6b7f99;font-weight:400">(optional — type "demo" to test)</span></div>
+  <input id="k-alphavantage" type="text" placeholder="Your Alpha Vantage key or demo..." style="width:100%;background:#0a0d12;border:1px solid #1e2d42;border-radius:7px;padding:10px 13px;color:#e8edf4;font-family:monospace;font-size:12px;outline:none;margin-bottom:6px;box-sizing:border-box;">
+  <div style="font-size:11px;color:#3a4a60;padding:8px 10px;background:#1a2030;border-radius:6px;border-left:3px solid #023e8a;margin-bottom:14px;"><a href="https://www.alphavantage.co/support/#api-key" target="_blank" style="color:#00b4d8;">alphavantage.co</a> &rarr; Get Free API Key</div>
+
+  <div style="font-size:10px;font-weight:600;letter-spacing:1px;color:#6b7f99;text-transform:uppercase;margin-bottom:6px;">Mediastack Key <span style="color:#6b7f99;font-weight:400">(optional)</span></div>
+  <input id="k-mediastack" type="text" placeholder="Your Mediastack key..." style="width:100%;background:#0a0d12;border:1px solid #1e2d42;border-radius:7px;padding:10px 13px;color:#e8edf4;font-family:monospace;font-size:12px;outline:none;margin-bottom:6px;box-sizing:border-box;">
+  <div style="font-size:11px;color:#3a4a60;padding:8px 10px;background:#1a2030;border-radius:6px;border-left:3px solid #023e8a;margin-bottom:20px;"><a href="https://mediastack.com" target="_blank" style="color:#00b4d8;">mediastack.com</a> &rarr; Free 500/month</div>
+
+  <!-- CLOUD SYNC -->
+  <div style="background:#1a2030;border:1px solid #243552;border-radius:8px;padding:14px;margin-bottom:16px;">
+    <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:#6b7f99;text-transform:uppercase;margin-bottom:8px;">&#9729; Cloud Sync — access keys from any device</div>
+    <div style="font-size:11px;color:#3a4a60;line-height:1.6;margin-bottom:10px;">Store keys in a private <a href="https://gist.github.com" target="_blank" style="color:#00b4d8;">GitHub Gist</a>. Get token at <a href="https://github.com/settings/tokens/new?scopes=gist&description=WorldPulse" target="_blank" style="color:#00b4d8;">github.com/settings/tokens</a> — select <strong style="color:#6b7f99;">gist</strong> scope only.</div>
+    <input id="gh-token" type="password" placeholder="GitHub token: ghp_..." style="width:100%;background:#0a0d12;border:1px solid #1e2d42;border-radius:6px;padding:9px 12px;color:#e8edf4;font-family:monospace;font-size:12px;outline:none;margin-bottom:7px;box-sizing:border-box;">
+    <input id="gh-gist-id" type="text" placeholder="Gist ID (auto-filled after first Save)" style="width:100%;background:#0a0d12;border:1px solid #1e2d42;border-radius:6px;padding:9px 12px;color:#e8edf4;font-family:monospace;font-size:12px;outline:none;margin-bottom:10px;box-sizing:border-box;">
+    <div style="display:flex;gap:8px;">
+      <button onclick="wpSaveCloud()" style="flex:1;background:#2a9d8f;color:#fff;border:none;border-radius:6px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">&#9729; Save to Cloud</button>
+      <button onclick="wpLoadCloud()" style="flex:1;background:#0077b6;color:#fff;border:none;border-radius:6px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">&#8681; Load from Cloud</button>
+    </div>
+    <div id="cloud-msg" style="display:none;font-size:12px;margin-top:10px;padding:9px;border-radius:6px;"></div>
+  </div>
+
+  <!-- FILE IMPORT/EXPORT -->
+  <div style="display:flex;gap:8px;margin-bottom:12px;">
+    <button onclick="wpExport()" style="flex:1;background:#1a2030;color:#6b7f99;border:1px solid #1e2d42;border-radius:6px;padding:9px;font-size:12px;cursor:pointer;">&#8681; Export Keys File</button>
+    <button onclick="document.getElementById('wp-import-file').click()" style="flex:1;background:#1a2030;color:#6b7f99;border:1px solid #1e2d42;border-radius:6px;padding:9px;font-size:12px;cursor:pointer;">&#8679; Import Keys File</button>
+  </div>
+  <input type="file" id="wp-import-file" accept=".json" style="display:none;" onchange="wpImport(this)">
+
+  <div id="serr" style="display:none;color:#e63946;font-size:12px;margin-bottom:10px;padding:8px;background:rgba(230,57,70,.08);border-radius:6px;">Please enter your Anthropic API key.</div>
+  <div id="ok-msg" style="display:none;color:#2a9d8f;font-size:12px;margin-bottom:10px;padding:8px;background:rgba(42,157,143,.08);border-radius:6px;"></div>
+
+  <div style="background:#1a2030;border:1px solid #2a9d8f;border-radius:8px;padding:14px;margin-bottom:12px;">
+    <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:#2a9d8f;text-transform:uppercase;margin-bottom:8px;">&#11015; Portable Version — Use on Any Device</div>
+    <div style="font-size:11px;color:#6b7f99;line-height:1.6;margin-bottom:10px;">After loading your keys above, click this to download a personal copy with keys permanently baked in. Open it anywhere — no setup needed.</div>
+    <button onclick="wpBakeKeys()" style="width:100%;background:#2a9d8f;color:#fff;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:sans-serif;">&#11015; Download Personal WorldPulse (keys inside)</button>
+  </div>
+  <button onclick="wpLaunch()" style="width:100%;background:#00b4d8;color:#0a0d12;border:none;border-radius:8px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:sans-serif;">Launch WorldPulse &rarr;</button>
+</div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <div class="logo"><span class="dot"></span>WorldPulse<span class="live-badge">LIVE</span></div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span id="fetch-status" style="font-size:11px;color:var(--muted);"></span>
+      <button onclick="testKey()" style="font-size:10px;color:var(--muted);background:none;border:1px solid var(--br);padding:2px 7px;border-radius:4px;cursor:pointer;">Test Key</button>
+      <button class="key-btn" id="keybtn">&#9881; Keys</button>
+      <span class="clock" id="clock"></span>
+    </div>
+  </div>
+
+  <div class="ticker"><div class="ticker-label">LIVE</div>
+    <div class="ticker-track" id="ticker">
+      <span class="ti"><span class="ti-src">WORLDPULSE</span>Select a topic and click Fetch Live News</span>
+      <span class="ti"><span class="ti-src">WORLDPULSE</span>Select a topic and click Fetch Live News</span>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="sidebar">
+      <div class="sec-t" style="margin-top:4px">Source Type</div>
+      <button class="fb on" data-sf="all" onclick="setSF('all',this)"><span class="fdot" style="background:var(--muted)"></span>All<span class="fc" id="fc-all">0</span></button>
+      <button class="fb" data-sf="press" onclick="setSF('press',this)"><span class="fdot" style="background:#60b4ff"></span>Press<span class="fc" id="fc-press">0</span></button>
+      <button class="fb" data-sf="gov" onclick="setSF('gov',this)"><span class="fdot" style="background:#5ecfa0"></span>Government<span class="fc" id="fc-gov">0</span></button>
+      <button class="fb" data-sf="federal" onclick="setSF('federal',this)"><span class="fdot" style="background:#f4a261"></span>Federal<span class="fc" id="fc-federal">0</span></button>
+      <button class="fb" data-sf="social" onclick="setSF('social',this)"><span class="fdot" style="background:#c084fc"></span>Social<span class="fc" id="fc-social">0</span></button>
+      <button class="fb" data-sf="research" onclick="setSF('research',this)"><span class="fdot" style="background:#2dd4bf"></span>Research<span class="fc" id="fc-research">0</span></button>
+      <div class="sdiv"></div>
+      <div class="sec-t">Category</div>
+      <button class="fb" onclick="setCat('Politics',this)">&#127963; Politics</button>
+      <button class="fb" onclick="setCat('Economy',this)">&#128200; Economy</button>
+      <button class="fb" onclick="setCat('Health',this)">&#127973; Health</button>
+      <button class="fb" onclick="setCat('Science',this)">&#128300; Science</button>
+      <button class="fb" onclick="setCat('Security',this)">&#128737; Security</button>
+      <button class="fb" onclick="setCat('Climate',this)">&#127807; Climate</button>
+      <button class="fb" onclick="setCat('Technology',this)">&#128187; Tech</button>
+      <button class="fb" onclick="setCat('Finance',this);setCat('Economy',this)">&#128178; Finance/Economy</button>
+      <button class="fb" onclick="setCat('Conflict',this)">&#9876; Conflict</button>
+      <div class="sdiv"></div>
+      <div class="sec-t">Show Only</div>
+      <button class="fb" id="brk-btn" onclick="toggleF('brk')">&#128308; Breaking</button>
+      <button class="fb" id="trn-btn" onclick="toggleF('trn')">&#127760; Translated</button>
+      <button class="fb" id="rl-btn" onclick="toggleF('rl')">&#128225; Live only</button>
+      <div class="sdiv"></div>
+      <button class="fb" onclick="exportJSON()" style="color:var(--ac)">&#8681; Export JSON</button>
+      <button class="fb" onclick="clearFeed()" style="color:var(--red)">&#10005; Clear</button>
+    </div>
+
+    <div class="main">
+      <div class="feed-top">
+        <div class="feed-row">
+          <input class="search-in" id="search-in" placeholder="Search keyword..." oninput="renderFeed()">
+          <button class="fetch-btn" id="fetch-btn" onclick="fetchAll(false)">&#9889; Fetch Live News</button>
+          <button class="fetch-btn sec" id="more-btn" onclick="fetchAll(true)" style="display:none">+ More</button>
+          <button class="fetch-btn sec" id="refresh-btn" onclick="clearCache();fetchAll(false);" style="display:none" title="Clear cache and fetch fresh data">↺ Fresh</button>
+        </div>
+        <div class="chips">
+          <span class="chip on" onclick="setChip(this,'world news today','')">&#127757; Breaking</span>
+          <span class="chip" onclick="setChip(this,'economy finance markets','')">&#128200; Economy</span>
+          <span class="chip" onclick="setChip(this,'health WHO pandemic disease','')">&#127973; Health</span>
+          <span class="chip" onclick="setChip(this,'climate environment energy','')">&#127807; Climate</span>
+          <span class="chip" onclick="setChip(this,'war conflict military security','')">&#9876; Conflict</span>
+          <span class="chip" onclick="setChip(this,'technology AI science','')">&#128187; Tech</span>
+          <span class="chip" onclick="setChip(this,'finance','finance')">&#128178; Finance</span>
+          <span class="chip" id="chip-greece" onclick="setChip(this,'Greece news','gr')">&#127468;&#127479; Greece</span>
+          <span class="chip" id="chip-amfissa" onclick="setChip(this,'Amfissa Fokida','gr')">&#129361; Amfissa</span>
+        </div>
+      </div>
+
+      <div id="stats" class="stats" style="display:none">
+        <div class="stat"><div class="stat-n" id="s-tot">0</div><div class="stat-l">Articles</div></div>
+        <div class="stat"><div class="stat-n" id="s-live">0</div><div class="stat-l">Live</div></div>
+        <div class="stat"><div class="stat-n" id="s-src">0</div><div class="stat-l">Sources</div></div>
+        <div class="stat"><div class="stat-n" id="s-trn">0</div><div class="stat-l">Translated</div></div>
+        <div class="stat"><div class="stat-n" id="s-brk">0</div><div class="stat-l">Breaking</div></div>
+      </div>
+
+      <div id="prog" class="prog" style="display:none">
+        <div class="prog-hd">&#128225; Fetching Live Sources</div>
+        <div class="log-wrap" id="log-wrap"></div>
+      </div>
+
+      <div class="feed-scroll"><div id="feed">
+        <div class="empty">
+          <div class="empty-ic">&#127757;</div>
+          <div class="empty-ti">Live Global Intelligence</div>
+          <div class="empty-su">Real news from live APIs — GNews, protothema.gr, ethnos.gr, TheNewsAPI — enriched and translated by Claude AI.<br><br>Select a topic above and click <strong>&#9889; Fetch Live News</strong>.</div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="rpanel">
+      <div class="rpt">Regions</div>
+      <div class="rmap">
+        <div class="rcard" onclick="setReg('Europe',this)"><div class="rf">&#127466;&#127482;</div><div class="rn">Europe</div><div class="rc" id="rn-Europe">—</div></div>
+        <div class="rcard" onclick="setReg('Americas',this)"><div class="rf">&#127758;</div><div class="rn">Americas</div><div class="rc" id="rn-Americas">—</div></div>
+        <div class="rcard" onclick="setReg('Asia',this)"><div class="rf">&#127759;</div><div class="rn">Asia</div><div class="rc" id="rn-Asia">—</div></div>
+        <div class="rcard" onclick="setReg('Middle East',this)"><div class="rf">&#128332;</div><div class="rn">Middle East</div><div class="rc" id="rn-MiddleEast">—</div></div>
+        <div class="rcard" onclick="setReg('Africa',this)"><div class="rf">&#127757;</div><div class="rn">Africa</div><div class="rc" id="rn-Africa">—</div></div>
+        <div class="rcard" onclick="setReg('Oceania',this)"><div class="rf">&#129432;</div><div class="rn">Oceania</div><div class="rc" id="rn-Oceania">—</div></div>
+      </div>
+
+      <div id="greek-panel" style="display:none;margin-bottom:13px;">
+        <div class="rpt">&#127468;&#127479; Read Greek Sources</div>
+        <div class="src-links">
+          <a class="src-link" href="https://www.protothema.gr" target="_blank">&#128240; Proto Thema</a>
+          <a class="src-link" href="https://www.ethnos.gr" target="_blank">&#128240; Ethnos</a>
+          <a class="src-link" href="https://www.ant1news.gr" target="_blank">&#128250; Ant1 News</a>
+          <a class="src-link" href="https://www.skai.gr/news" target="_blank">&#128250; Skai</a>
+          <a class="src-link" href="https://www.iefimerida.gr" target="_blank">&#128240; Iefimerida</a>
+          <a class="src-link" href="https://www.ekathimerini.com" target="_blank">&#128240; Ekathimerini (EN)</a>
+          <a class="src-link" href="https://www.fokidanews.gr" target="_blank">&#129361; Fokida News</a>
+          <a class="src-link" href="https://www.stereaonline.gr" target="_blank">&#128205; Sterea Online</a>
+          <a class="src-link" href="https://www.lamiareport.gr" target="_blank">&#128205; Lamia Report</a>
+        </div>
+      </div>
+
+      <div id="macro-panel" style="display:none;margin-bottom:14px;">
+        <div class="rpt" style="color:#f4a261;">&#9889; Macro Intelligence</div>
+        <div style="font-size:11px;color:#3a4a60;margin-bottom:8px;line-height:1.5;">AI analysis of how current news events connect and impact each other — direct and indirect causal chains.</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+          <button onclick="runMacroAnalysis('all')" style="flex:1;background:#f4a261;color:#0a0d12;border:none;border-radius:5px;padding:7px 6px;font-size:11px;font-weight:700;cursor:pointer;min-width:60px;">&#9889; Full Analysis</button>
+          <button onclick="runMacroAnalysis('short')" style="flex:1;background:#1a2030;color:#e8edf4;border:1px solid #1e2d42;border-radius:5px;padding:7px 6px;font-size:11px;cursor:pointer;min-width:60px;">Short Term</button>
+          <button onclick="runMacroAnalysis('long')" style="flex:1;background:#1a2030;color:#e8edf4;border:1px solid #1e2d42;border-radius:5px;padding:7px 6px;font-size:11px;cursor:pointer;min-width:60px;">Long Term</button>
+        </div>
+        <div id="macro-result" style="font-size:11px;color:#9dafc8;line-height:1.7;max-height:400px;overflow-y:auto;"></div>
+      </div>
+      <div class="rpt">Trending</div>
+      <div id="trends"><div style="font-size:11px;color:var(--dim)">Fetch news to see trends</div></div>
+
+      <div class="analyst-box">
+        <div class="rpt" style="margin-bottom:7px">&#129504; AI Analyst</div>
+        <textarea class="analyst-in" id="analyst-q" placeholder="Ask anything about today's news..."></textarea>
+        <button class="fetch-btn" style="width:100%;justify-content:center;font-size:12px;padding:7px" onclick="askAnalyst()">Analyse</button>
+        <div class="analyst-resp" id="analyst-r"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// -- SETUP VARS ----------------------------------------------------------------
+var KEYS = {anthropic:'',gnews:'',thenews:'',currents:'',newsdata:'',perigon:'',alphavantage:'',mediastack:''};
+
+// -- SETUP HELPERS -------------------------------------------------------------
+function wpGetKeys() {
+  return {
+    anthropic:    (document.getElementById('k-anthropic').value||'').trim(),
+    thenews:      (document.getElementById('k-thenews').value||'').trim(),
+    currents:     (document.getElementById('k-currents').value||'').trim(),
+    newsdata:     (document.getElementById('k-newsdata').value||'').trim(),
+    perigon:      (document.getElementById('k-perigon').value||'').trim(),
+    alphavantage: (document.getElementById('k-alphavantage').value||'').trim(),
+    mediastack:   (document.getElementById('k-mediastack').value||'').trim(),
+  };
+}
+function wpFillKeys(k) {
+  if(k.anthropic)    document.getElementById('k-anthropic').value    = k.anthropic;
+  if(k.thenews)      document.getElementById('k-thenews').value      = k.thenews;
+  if(k.currents)     document.getElementById('k-currents').value     = k.currents;
+  if(k.newsdata)     document.getElementById('k-newsdata').value     = k.newsdata;
+  if(k.perigon)      document.getElementById('k-perigon').value      = k.perigon;
+  if(k.alphavantage) document.getElementById('k-alphavantage').value = k.alphavantage;
+  if(k.mediastack)   document.getElementById('k-mediastack').value   = k.mediastack;
+}
+function wpOkMsg(text) {
+  var el = document.getElementById('ok-msg');
+  el.textContent = text; el.style.display = 'block';
+  setTimeout(function(){ el.style.display='none'; }, 5000);
+}
+function wpCloudMsg(text, ok) {
+  var el = document.getElementById('cloud-msg');
+  el.style.display = 'block';
+  el.style.background = ok ? 'rgba(42,157,143,.15)' : 'rgba(230,57,70,.1)';
+  el.style.color = ok ? '#2a9d8f' : '#e63946';
+  el.textContent = text;
+  if(ok) setTimeout(function(){ el.style.display='none'; }, 6000);
+}
+
+// -- LAUNCH --------------------------------------------------------------------
+function wpLaunch() {
+  var k = wpGetKeys();
+  if(!k.anthropic) {
+    document.getElementById('serr').style.display = 'block';
+    return;
+  }
+  document.getElementById('serr').style.display = 'none';
+  KEYS.anthropic    = k.anthropic    || '';
+  KEYS.thenews      = k.thenews      || '';
+  KEYS.currents     = k.currents     || '';
+  KEYS.newsdata     = k.newsdata     || '';
+  KEYS.perigon      = k.perigon      || '';
+  KEYS.alphavantage = k.alphavantage || '';
+  KEYS.mediastack   = k.mediastack   || '';
+  KEYS.gnews        = '';
+  try { 
+    localStorage.setItem('wp_keys', JSON.stringify(k)); 
+    if(k.alphavantage) console.log('AV key saved: '+k.alphavantage.slice(0,8)+'...');
+    else console.log('WARNING: No AV key saved');
+  } catch(e){}
+  // Clear AV cache so new key fetches fresh data
+  try {
+    Object.keys(sessionStorage).forEach(function(k) {
+      if(k.startsWith('av_') || k.startsWith('tnews_') || k.startsWith('curr_') || k.startsWith('peri_') || k.startsWith('mstack_')) {
+        sessionStorage.removeItem(k);
+      }
+    });
+  } catch(e) {}
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+}
+
+function showSetup() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('setup').style.display = 'flex';
+  // Re-fill from localStorage to make sure latest saved values show
+  try {
+    var saved = JSON.parse(localStorage.getItem('wp_keys')||'{}');
+    if(saved.anthropic) wpFillKeys(saved);
+    else wpFillKeys(KEYS);
+  } catch(e) { wpFillKeys(KEYS); }
+}
+
+// -- CLOUD SYNC ----------------------------------------------------------------
+function wpSaveCloud() {
+  var token = (document.getElementById('gh-token').value||'').trim();
+  var gistId = (document.getElementById('gh-gist-id').value||'').trim();
+  if(!token) { wpCloudMsg('Enter your GitHub token first.', false); return; }
+  wpCloudMsg('Saving to cloud...', true);
+  var keys = wpGetKeys();
+  var body = JSON.stringify({
+    description: 'WorldPulse API Keys',
+    public: false,
+    files: {'worldpulse-keys.json': {content: JSON.stringify(keys, null, 2)}}
+  });
+  var url = gistId ? 'https://api.github.com/gists/'+gistId : 'https://api.github.com/gists';
+  var method = gistId ? 'PATCH' : 'POST';
+  var xhr = new XMLHttpRequest();
+  xhr.open(method, url, true);
+  xhr.setRequestHeader('Authorization', 'token '+token);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.setRequestHeader('Accept', 'application/json');
+  xhr.onload = function() {
+    try {
+      var d = JSON.parse(xhr.responseText);
+      if(d.id) {
+        document.getElementById('gh-gist-id').value = d.id;
+        try { localStorage.setItem('wp_gh_token',token); localStorage.setItem('wp_gh_gist',d.id); } catch(e){}
+        wpCloudMsg('Saved to cloud! Gist ID: '+d.id, true);
+      } else { wpCloudMsg('Error: '+(d.message||'Unknown'), false); }
+    } catch(e) { wpCloudMsg('Parse error: '+e.message, false); }
+  };
+  xhr.onerror = function() { wpCloudMsg('Network error - check connection.', false); };
+  xhr.timeout = 10000;
+  xhr.ontimeout = function() { wpCloudMsg('Timeout - try again.', false); };
+  xhr.send(body);
+}
+
+function wpLoadCloud() {
+  var token = (document.getElementById('gh-token').value||'').trim();
+  var gistId = (document.getElementById('gh-gist-id').value||'').trim();
+  if(!token) { wpCloudMsg('Enter your GitHub token.', false); return; }
+  if(!gistId) { wpCloudMsg('Enter your Gist ID (or Save first).', false); return; }
+  wpCloudMsg('Loading from cloud...', true);
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', 'https://api.github.com/gists/'+gistId, true);
+  xhr.setRequestHeader('Authorization', 'token '+token);
+  xhr.setRequestHeader('Accept', 'application/json');
+  xhr.onload = function() {
+    try {
+      var d = JSON.parse(xhr.responseText);
+      if(d.files && d.files['worldpulse-keys.json']) {
+        var keys = JSON.parse(d.files['worldpulse-keys.json'].content);
+        wpFillKeys(keys);
+        // Also set KEYS object directly
+        if(keys.anthropic)    KEYS.anthropic    = keys.anthropic;
+        if(keys.thenews)      KEYS.thenews      = keys.thenews;
+        if(keys.currents)     KEYS.currents     = keys.currents;
+        if(keys.newsdata)     KEYS.newsdata     = keys.newsdata;
+        if(keys.perigon)      KEYS.perigon      = keys.perigon;
+        if(keys.alphavantage) KEYS.alphavantage = keys.alphavantage;
+        if(keys.mediastack)   KEYS.mediastack   = keys.mediastack;
+        try { localStorage.setItem('wp_keys', JSON.stringify(keys)); localStorage.setItem('wp_gh_token',token); localStorage.setItem('wp_gh_gist',gistId); } catch(e){}
+        wpCloudMsg('Keys loaded! Click Launch.', true);
+        wpOkMsg('All keys loaded from cloud. Click Launch WorldPulse.');
+      } else if(d.message) {
+        wpCloudMsg('GitHub error: '+d.message, false);
+      } else {
+        wpCloudMsg('No worldpulse-keys.json found in Gist.', false);
+      }
+    } catch(e) { wpCloudMsg('Parse error: '+e.message, false); }
+  };
+  xhr.onerror = function() { wpCloudMsg('Network error - check your connection.', false); };
+  xhr.ontimeout = function() { wpCloudMsg('Timeout - try again.', false); };
+  xhr.timeout = 10000;
+  xhr.send();
+}
+
+// -- FILE EXPORT/IMPORT --------------------------------------------------------
+function wpExport() {
+  var blob = new Blob([JSON.stringify(wpGetKeys(),null,2)], {type:'application/json'});
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'worldpulse-keys.json'; a.click();
+}
+function wpImport(input) {
+  var file = input.files[0]; if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      wpFillKeys(JSON.parse(e.target.result));
+      wpOkMsg('Keys imported! Click Launch.');
+    } catch(err) { alert('Invalid key file.'); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+// -- AUTO-LOAD SAVED KEYS ------------------------------------------------------
+(function() {
+  try {
+    var saved = JSON.parse(localStorage.getItem('wp_keys')||'{}');
+    // Use saved keys OR fall back to baked-in defaults in KEYS object
+    var ak = saved.anthropic    || KEYS.anthropic    || '';
+    var tk = saved.thenews      || KEYS.thenews      || '';
+    var ck = saved.currents     || KEYS.currents     || '';
+    var nk = saved.newsdata     || KEYS.newsdata     || '';
+    var pk = saved.perigon      || KEYS.perigon      || '';
+    var vk = saved.alphavantage || KEYS.alphavantage || '';
+    var mk = saved.mediastack   || KEYS.mediastack   || '';
+
+    if(ak) {
+      KEYS.anthropic=ak; KEYS.thenews=tk; KEYS.currents=ck;
+      KEYS.newsdata=nk; KEYS.perigon=pk; KEYS.alphavantage=vk;
+      KEYS.mediastack=mk; KEYS.gnews='';
+      // Fill form fields
+      document.getElementById('k-anthropic').value    = ak;
+      document.getElementById('k-thenews').value      = tk;
+      document.getElementById('k-currents').value     = ck;
+      document.getElementById('k-newsdata').value     = nk;
+      document.getElementById('k-perigon').value      = pk;
+      document.getElementById('k-alphavantage').value = vk;
+      document.getElementById('k-mediastack').value   = mk;
+      // Auto-launch - skip setup
+      document.getElementById('setup').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+    }
+    var ghToken = localStorage.getItem('wp_gh_token')||'';
+    var ghGist  = localStorage.getItem('wp_gh_gist')||'';
+    if(document.getElementById('gh-token'))   document.getElementById('gh-token').value   = ghToken;
+    if(document.getElementById('gh-gist-id')) document.getElementById('gh-gist-id').value = ghGist;
+  } catch(e){}
+})();
+
+// -- KEYBTN --------------------------------------------------------------------
+document.getElementById('keybtn').addEventListener('click', showSetup);
+document.getElementById('k-anthropic').addEventListener('keydown', function(e){ if(e.key==='Enter') wpLaunch(); });
+
+// MACRO INTELLIGENCE ENGINE
+async function runMacroAnalysis(mode) {
+  var el = document.getElementById('macro-result');
+  if(!el) return;
+  el.innerHTML = '<div style="color:#f4a261;">Analysing connections between news events...</div>';
+  var cats = ['Finance','Economy','Markets','Technology','Security','Health','Conflict','Climate'];
+  var arts = articles.filter(function(a){ return cats.indexOf(a.category)!==-1; }).slice(0,40);
+  if(arts.length < 3) { el.innerHTML = '<div style="color:#e63946;">Fetch Finance news first.</div>'; return; }
+  var bycat = {};
+  arts.forEach(function(a){ if(!bycat[a.category]) bycat[a.category]=[]; bycat[a.category].push('['+a.sourceName+'] '+a.title); });
+  var headlines = Object.keys(bycat).map(function(c){ return c.toUpperCase()+': '+bycat[c].slice(0,5).join(' | '); }).join('\n');
+  var tf = mode==='short'?'Focus on SHORT-TERM impacts (days/weeks).':mode==='long'?'Focus on LONG-TERM impacts (months/years).':'Cover both SHORT-TERM and LONG-TERM impacts.';
+  var p = 'You are a senior macro analyst. '+tf+'\n\n'+
+    'Analyse these news headlines and identify significant connections between events.\n'+
+    'For each connection: Event A -> Event B, Type (DIRECT/INDIRECT), Impact (POSITIVE/NEGATIVE), Mechanism (1-2 sentences), Strength (HIGH/MEDIUM/LOW), Timeline.\n'+
+    'End with a MACRO OUTLOOK paragraph.\n'+
+    'Focus on non-obvious important connections like: war -> oil price (DIRECT) -> semiconductor costs (INDIRECT).\n\n'+
+    'HEADLINES:\n'+headlines;
+  try {
+    var result = await claude(p);
+    var html = result
+      .split('DIRECT').join('<span style="color:#e63946;font-weight:700">DIRECT</span>')
+      .split('INDIRECT').join('<span style="color:#f4a261;font-weight:700">INDIRECT</span>')
+      .split('POSITIVE').join('<span style="color:#2a9d8f;font-weight:700">POSITIVE</span>')
+      .split('NEGATIVE').join('<span style="color:#e63946;font-weight:700">NEGATIVE</span>')
+      .split('HIGH').join('<span style="color:#e63946;font-weight:600">HIGH</span>')
+      .split('MEDIUM').join('<span style="color:#f4a261;font-weight:600">MEDIUM</span>')
+      .split(' LOW ').join(' <span style="color:#2a9d8f;font-weight:600">LOW</span> ')
+      .split('MACRO OUTLOOK').join('<br><strong style="color:#f4a261;display:block;margin-top:10px;border-top:1px solid #1e2d42;padding-top:8px;">MACRO OUTLOOK</strong>')
+      .split('\n\n').join('<br><br>').split('\n').join('<br>');
+    el.innerHTML = '<div style="line-height:1.8;color:#9dafc8;">'+html+'</div>';
+  } catch(e) { el.innerHTML = '<div style="color:#e63946;">Failed: '+e.message+'</div>'; }
+}
+
+
+// BAKE KEYS INTO FILE
+function wpBakeKeys() {
+  var k = wpGetKeys();
+  if(!k.anthropic) { alert('Enter your Anthropic key first.'); return; }
+  
+  // Read the current HTML source and inject keys into KEYS default object
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', window.location.href, false); // synchronous
+  xhr.send();
+  var html = xhr.responseText;
+  
+  // Replace the KEYS default line with keys baked in
+  var newKeysLine = "var KEYS = {" +
+    "anthropic:'" + k.anthropic + "'," +
+    "gnews:''," +
+    "thenews:'" + (k.thenews||'') + "'," +
+    "currents:'" + (k.currents||'') + "'," +
+    "newsdata:'" + (k.newsdata||'') + "'," +
+    "perigon:'" + (k.perigon||'') + "'," +
+    "alphavantage:'" + (k.alphavantage||'LLDVCFO94GTJNDM8') + "'," +
+    "mediastack:'" + (k.mediastack||'') + "'};";
+  
+  html = html.replace(/var KEYS = \{[^}]+\};/, newKeysLine);
+  
+  // Also save GitHub Gist credentials if present
+  var ghToken = document.getElementById('gh-token') ? document.getElementById('gh-token').value.trim() : '';
+  var ghGist  = document.getElementById('gh-gist-id') ? document.getElementById('gh-gist-id').value.trim() : '';
+  if(ghToken) {
+    html = html.replace("localStorage.getItem('wp_gh_token')||''", "localStorage.getItem('wp_gh_token')||'" + ghToken + "'");
+  }
+  if(ghGist) {
+    html = html.replace("localStorage.getItem('wp_gh_gist')||''", "localStorage.getItem('wp_gh_gist')||'" + ghGist + "'");
+  }
+  
+  // Download the personalised file
+  var blob = new Blob([html], {type: 'text/html'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'WorldPulse-Personal.html';
+  a.click();
+  
+  setTimeout(function() {
+    alert('Downloaded WorldPulse-Personal.html\n\nThis file has your keys baked in. Open it on any device — no setup needed!\n\nKeep it private as it contains your API keys.');
+  }, 500);
+}
+
+// TESTKEY
+function testKey() {
+  var k = (KEYS && KEYS.anthropic) ? KEYS.anthropic : '';
+  if(!k) { alert('KEYS.anthropic is empty - key not saved properly'); return; }
+  alert('Key loaded: ' + k.slice(0,15) + '... length=' + k.length + '\nTesting API now...');
+  fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:10,messages:[{role:'user',content:'Hi'}]})
+  }).then(function(r){return r.json();}).then(function(d){
+    if(d.error) alert('API ERROR: '+d.error.message+'\nType: '+d.error.type);
+    else alert('SUCCESS - API key works!\n'+JSON.stringify(d.content));
+  }).catch(function(e){ alert('Fetch failed: '+e.message); });
+}
+
+// CLOCK
+setInterval(function(){ document.getElementById('clock').textContent=new Date().toUTCString().slice(0,-4)+' UTC'; },1000);
+
+// STATE
+var articles=[],uid=0;
+var fSrc='all',fCat=null,fReg=null,fBrk=false,fTrn=false,fRl=false;
+var activeTopic='world news today',activeCountry='';
+var expanded={},briefs={};
+
+// LOGGING
+function addLog(msg,state){
+  var ic={active:'o',done:'v',warn:'!',err:'x'};
+  var d=document.createElement('div'); d.className='ll '+(state||'active');
+  d.innerHTML='<span class="ll-ic">'+(ic[state||'active']||'o')+'</span><span class="ll-tx">'+msg+'</span>';
+  var w=document.getElementById('log-wrap'); w.appendChild(d); w.scrollTop=9999; return d;
+}
+function upLog(el,msg,state){
+  var ic={active:'o',done:'v',warn:'!',err:'x'};
+  el.className='ll '+(state||'active');
+  el.innerHTML='<span class="ll-ic">'+(ic[state||'active']||'o')+'</span><span class="ll-tx">'+msg+'</span>';
+}
+
+// CLAUDE
+async function claude(prompt){
+  var res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':KEYS.anthropic,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+  });
+  var d=await res.json();
+  if(d.error) throw new Error(d.error.message);
+  return d.content.find(function(b){return b.type==='text';}).text||'';
+}
+
+// RSS
+function parseRSS(xml,name,type,lang){
+  return Array.from(xml.querySelectorAll('item,entry')).slice(0,15).map(function(item){
+    var get=function(){for(var i=0;i<arguments.length;i++){var el=item.querySelector(arguments[i]);if(el)return(el.textContent||'').trim();}return '';};
+    var t=get('title'); if(!t||t.length<5) return null;
+    return {rawTitle:t,rawDesc:get('description','summary','content').replace(/<[^>]+>/g,'').slice(0,250),
+            link:get('link','guid'),pubDate:get('pubDate','published','updated'),
+            sourceName:name,sourceType:type,sourceLang:lang,isLive:true};
+  }).filter(Boolean);
+}
+async function fetchRSS(url,name,type,lang){
+  var el=addLog('Fetching '+name+'...','active');
+  try{
+    var res=await fetch(url); if(!res.ok) throw new Error('HTTP '+res.status);
+    var text=await res.text();
+    // Skip UTF-16 encoded feeds (BOM detection)
+    if(text.charCodeAt(0)===65279||text.slice(0,5).includes('\0')) throw new Error('UTF-16 not supported');
+    var xml=new DOMParser().parseFromString(text,'application/xml');
+    if(xml.querySelector('parsererror')) throw new Error('Parse error');
+    var items=parseRSS(xml,name,type,lang||'Greek');
+    if(!items.length) throw new Error('No items');
+    upLog(el,'v '+name+'  -  '+items.length+' articles','done'); return items;
+  }catch(e){upLog(el,'! '+name+'  -  '+e.message,'warn'); return [];}
+}
+
+// GNEWS - requires paid plan for CORS browser access, kept for future use
+async function fetchGNews(query,lang,country,label){ return []; }
+
+// THENEWSAPI
+async function fetchTheNews(search,label){
+  var token=(KEYS.thenews||'').trim();
+  if(!token) return [];
+  // Cache in sessionStorage to avoid burning daily limit on repeat fetches
+  var cacheKey='tnews_'+btoa(search).slice(0,20);
+  try {
+    var cached=sessionStorage.getItem(cacheKey);
+    if(cached){
+      var items=JSON.parse(cached);
+      var el=addLog('TheNewsAPI: '+label+' (cached)...','active');
+      upLog(el,'v TheNewsAPI '+label+'  -  '+items.length+' (from cache)','done');
+      return items;
+    }
+  } catch(e){}
+  var el=addLog('TheNewsAPI: '+label+'...','active');
+  try{
+    var url='https://api.thenewsapi.com/v1/news/all?search='+encodeURIComponent(search)+'&language=en&limit=25&api_token='+token;
+    var res=await fetch(url); var d=await res.json();
+    if(d.error) throw new Error(typeof d.error==='object'?(d.error.message||JSON.stringify(d.error)):d.error);
+    var items=(d.data||[]).map(function(a){
+      return {rawTitle:a.title,rawDesc:a.description||a.snippet||'',link:a.url,pubDate:a.published_at,
+              sourceName:a.source||'TheNewsAPI',sourceType:'press',sourceLang:'English',isLive:true};
+    });
+    // Cache for this browser session (clears when tab closes)
+    try { sessionStorage.setItem(cacheKey, JSON.stringify(items)); } catch(e){}
+    upLog(el,'v TheNewsAPI '+label+'  -  '+items.length+' articles','done'); return items;
+  }catch(e){upLog(el,'! TheNewsAPI '+label+'  -  '+e.message,'warn'); return [];}
+}
+
+// CURRENTS API
+async function fetchCurrents(query, label) {
+  if(!KEYS.currents) return [];
+  var cacheKey='curr_'+btoa(query).slice(0,20);
+  try { var c=sessionStorage.getItem(cacheKey); if(c){ var el=addLog('Currents: '+label+' (cached)','active'); upLog(el,'v Currents '+label+' (cache)','done'); return JSON.parse(c); } } catch(e){}
+  var el=addLog('Currents: '+label+'...','active');
+  try {
+    var url='https://api.currentsapi.services/v1/search?keywords='+encodeURIComponent(query)+'&language=en&apiKey='+KEYS.currents;
+    var res=await fetch(url); var d=await res.json();
+    if(d.status!=='ok') throw new Error(d.msg||'Error');
+    var items=(d.news||[]).map(function(a){
+      return {rawTitle:a.title,rawDesc:a.description||'',link:a.url,pubDate:a.published,
+              sourceName:a.author||'Currents',sourceType:'press',sourceLang:'English',isLive:true};
+    });
+    try{sessionStorage.setItem(cacheKey,JSON.stringify(items));}catch(e){}
+    upLog(el,'v Currents '+label+'  -  '+items.length+' articles','done'); return items;
+  }catch(e){upLog(el,'! Currents '+label+'  -  '+e.message,'warn'); return [];}
+}
+
+// NEWSDATA.IO
+async function fetchNewsdata(query, label) {
+  if(!KEYS.newsdata) return [];
+  var el=addLog('Newsdata: '+label+'...','active');
+  try {
+    var url='https://newsdata.io/api/1/news?apikey='+KEYS.newsdata+'&q='+encodeURIComponent(query)+'&language=en';
+    var res=await fetch(url); var d=await res.json();
+    if(d.status!=='success') throw new Error(d.results?.message||'Error');
+    var items=(d.results||[]).map(function(a){
+      return {rawTitle:a.title,rawDesc:a.description||a.content||'',link:a.link,pubDate:a.pubDate,
+              sourceName:a.source_id||'Newsdata',sourceType:'press',sourceLang:'English',isLive:true};
+    });
+    upLog(el,'v Newsdata '+label+'  -  '+items.length+' articles','done'); return items;
+  }catch(e){upLog(el,'! Newsdata '+label+'  -  '+e.message,'warn'); return [];}
+}
+
+// PERIGON
+async function fetchPerigon(query, label) {
+  if(!KEYS.perigon) return [];
+  var el=addLog('Perigon: '+label+'...','active');
+  try {
+    var url='https://api.goperigon.com/v1/all?apiKey='+KEYS.perigon+'&q='+encodeURIComponent(query)+'&language=en&size=10';
+    var res=await fetch(url); var d=await res.json();
+    if(d.status&&d.status!==200) throw new Error(d.message||'Error');
+    var items=(d.articles||[]).map(function(a){
+      return {rawTitle:a.title,rawDesc:a.description||a.summary||'',link:a.url,pubDate:a.pubDate||a.addDate,
+              sourceName:(a.source&&a.source.name)||'Perigon',sourceType:'press',sourceLang:'English',isLive:true};
+    });
+    upLog(el,'v Perigon '+label+'  -  '+items.length+' articles','done'); return items;
+  }catch(e){upLog(el,'! Perigon '+label+'  -  '+e.message,'warn'); return [];}
+}
+
+// ALPHA VANTAGE - Market movers & news
+async function fetchAlphaVantage(tickers, label) {
+  var key=(KEYS.alphavantage||'LLDVCFO94GTJNDM8').trim();
+  var el=addLog('AlphaVantage: '+label+' ('+key.slice(0,8)+'...)...','active');
+  try {
+    var key2=key;
+    var url='https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers='+encodeURIComponent(tickers)+'&sort=LATEST&limit=25&apikey='+key2;
+    var res=await fetch(url); var d=await res.json();
+    if(d['Information']&&d['Information'].includes('demo')) throw new Error('Demo key - get free key at alphavantage.co');
+    if(d['Error Message']||d['Note']) throw new Error(d['Error Message']||d['Note']);
+    var items=(d.feed||[]).map(function(a){
+      return {rawTitle:a.title,rawDesc:a.summary||'',link:a.url,pubDate:a.time_published,
+              sourceName:a.source||'AlphaVantage',sourceType:'press',sourceLang:'English',isLive:true};
+    });
+    upLog(el,'v AlphaVantage '+label+'  -  '+items.length+' articles','done'); return items;
+  }catch(e){upLog(el,'! AlphaVantage '+label+'  -  '+e.message,'warn'); return [];}
+}
+
+// MEDIASTACK
+async function fetchMediastack(keywords, categories, label) {
+  if(!KEYS.mediastack) return [];
+  var cacheKey='mstack_'+btoa(keywords).slice(0,20);
+  try { var c=sessionStorage.getItem(cacheKey); if(c){ var el=addLog('Mediastack: '+label+' (cached)','active'); upLog(el,'v Mediastack '+label+' (cache)','done'); return JSON.parse(c); } } catch(e){}
+  var el=addLog('Mediastack: '+label+'...','active');
+  try{
+    var url='http://api.mediastack.com/v1/news?access_key='+KEYS.mediastack+'&keywords='+encodeURIComponent(keywords)+'&categories='+categories+'&languages=en&limit=25&sort=published_desc';
+    var res=await fetch(url); var d=await res.json();
+    if(d.error) throw new Error(d.error.message||JSON.stringify(d.error));
+    var items=(d.data||[]).map(function(a){
+      return {rawTitle:a.title,rawDesc:a.description||'',link:a.url,pubDate:a.published_at,
+              sourceName:a.source||'Mediastack',sourceType:'press',sourceLang:a.language==='en'?'English':'Other',isLive:true};
+    });
+    try{sessionStorage.setItem(cacheKey,JSON.stringify(items));}catch(e){}
+    upLog(el,'v Mediastack '+label+'  -  '+items.length+' articles','done'); return items;
+  }catch(e){upLog(el,'! Mediastack '+label+'  -  '+e.message,'warn'); return [];}
+}
+
+// ECB STATISTICAL DATA - live exchange rates
+async function fetchECBData() {
+  var el=addLog('ECB: Live exchange rates...','active');
+  try {
+    var url='https://data-api.ecb.europa.eu/service/data/EXR/D.USD+GBP+JPY+CNY+CHF.EUR.SP00.A?format=jsondata&lastNObservations=1';
+    var res=await fetch(url); var d=await res.json();
+    var series=d.dataSets&&d.dataSets[0]&&d.dataSets[0].series;
+    if(!series) throw new Error('No data');
+    var struct=d.structure.dimensions.series;
+    var currMap={0:'USD/EUR',1:'GBP/EUR',2:'JPY/EUR',3:'CNY/EUR',4:'CHF/EUR'};
+    var items=Object.keys(series).map(function(k,i){
+      var obs=series[k].observations;
+      var val=obs&&obs[Object.keys(obs)[0]]&&obs[Object.keys(obs)[0]][0];
+      var pair=currMap[i]||'FX';
+      return {rawTitle:'ECB Rate: '+pair+' = '+parseFloat(val).toFixed(4),
+              rawDesc:'Official ECB exchange rate as of today. Source: European Central Bank Statistical Data Warehouse.',
+              link:'https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/',
+              pubDate:new Date().toISOString(),sourceName:'ECB',sourceType:'federal',sourceLang:'English',isLive:true};
+    }).filter(Boolean);
+    upLog(el,'v ECB  -  '+items.length+' live exchange rates','done'); return items;
+  }catch(e){upLog(el,'! ECB data  -  '+e.message,'warn'); return [];}
+}
+
+// WORLD BANK - GDP data
+async function fetchWorldBankData() {
+  var el=addLog('World Bank: GDP data...','active');
+  try {
+    var countries='US;CN;DE;JP;GB;FR;IN;BR;GR';
+    var url='https://api.worldbank.org/v2/en/country/'+countries+'/indicator/NY.GDP.MKTP.CD?format=json&mrv=1&per_page=20';
+    var res=await fetch(url); var d=await res.json();
+    var data=d[1]||[];
+    var items=data.filter(function(r){return r.value;}).map(function(r){
+      var gdp=(r.value/1e12).toFixed(2);
+      return {rawTitle:r.country.value+' GDP: $'+gdp+' trillion ('+r.date+')',
+              rawDesc:'World Bank official GDP data for '+r.country.value+'. Latest available year: '+r.date+'. GDP: $'+gdp+' trillion USD.',
+              link:'https://data.worldbank.org/indicator/NY.GDP.MKTP.CD',
+              pubDate:new Date().toISOString(),sourceName:'World Bank',sourceType:'federal',sourceLang:'English',isLive:true};
+    });
+    upLog(el,'v World Bank  -  '+items.length+' GDP datapoints','done'); return items;
+  }catch(e){upLog(el,'! World Bank  -  '+e.message,'warn'); return [];}
+}
+
+// BLS - US Jobs/Inflation data
+async function fetchBLSData() {
+  var el=addLog('BLS: US economic indicators...','active');
+  try {
+    // CPI (inflation) and Unemployment rate
+    var res=await fetch('https://api.bls.gov/publicAPI/v2/timeseries/data/CUUR0000SA0?startyear=2025&endyear=2026');
+    var d=await res.json();
+    var items=[];
+    var series=d.Results&&d.Results.series&&d.Results.series[0];
+    var latest=series&&series.data&&series.data[0];
+    if(latest){
+      items.push({rawTitle:'US CPI Inflation Index: '+latest.value+' ('+latest.periodName+' '+latest.year+')',
+                  rawDesc:'Official US Bureau of Labor Statistics CPI data. Consumer Price Index for '+latest.periodName+' '+latest.year+': '+latest.value+'. This measures inflation across all urban consumers.',
+                  link:'https://www.bls.gov/cpi/',pubDate:new Date().toISOString(),
+                  sourceName:'US Bureau of Labor Statistics',sourceType:'federal',sourceLang:'English',isLive:true});
+    }
+    upLog(el,'v BLS  -  '+items.length+' economic indicators','done'); return items;
+  }catch(e){upLog(el,'! BLS  -  '+e.message,'warn'); return [];}
+}
+
+// COINGECKO TRENDING
+function fetchCoinGeckoTrending() {
+  var el=addLog('CoinGecko: trending crypto...','active');
+  return fetch('https://api.coingecko.com/api/v3/search/trending',{signal:AbortSignal.timeout(8000)})
+    .then(function(r){return r.json();}).then(function(d){
+      var coins=(d.coins||[]).slice(0,10);
+      var items=coins.map(function(c){
+        var coin=c.item;
+        return {rawTitle:'Trending Crypto: '+coin.name+' ('+coin.symbol+') - Rank #'+coin.market_cap_rank,
+                rawDesc:'CoinGecko trending coin. '+coin.name+' ('+coin.symbol+') is currently trending. Market cap rank: '+coin.market_cap_rank+'. Score: '+coin.score,
+                link:'https://www.coingecko.com/en/coins/'+coin.id,
+                pubDate:new Date().toISOString(),sourceName:'CoinGecko',sourceType:'research',sourceLang:'English',isLive:true};
+      });
+      upLog(el,'v CoinGecko -- '+items.length+' trending coins','done');
+      return items;
+    }).catch(function(e){upLog(el,'! CoinGecko -- '+e.message,'warn');return [];});
+}
+
+// EXCHANGE RATE API (free, no key)
+function fetchExchangeRates() {
+  var el=addLog('ExchangeRateAPI: live FX rates...','active');
+  return fetch('https://api.exchangerate-api.com/v4/latest/USD',{signal:AbortSignal.timeout(8000)})
+    .then(function(r){return r.json();}).then(function(d){
+      var pairs=['EUR','GBP','JPY','CHF','CNY','AUD','CAD','NOK','SEK','TRY','INR','BRL','MXN','SGD','HKD'];
+      var items=pairs.filter(function(p){return d.rates&&d.rates[p];}).map(function(p){
+        return {rawTitle:'USD/'+p+' Exchange Rate: '+d.rates[p].toFixed(4)+' ('+new Date(d.date).toDateString()+')',
+                rawDesc:'Live USD to '+p+' exchange rate: 1 USD = '+d.rates[p].toFixed(4)+' '+p+'. Source: ExchangeRate-API (updated daily).',
+                link:'https://www.exchangerate-api.com',
+                pubDate:new Date().toISOString(),sourceName:'ExchangeRate-API',sourceType:'federal',sourceLang:'English',isLive:true};
+      });
+      upLog(el,'v ExchangeRateAPI -- '+items.length+' FX rates','done');
+      return items;
+    }).catch(function(e){upLog(el,'! ExchangeRateAPI -- '+e.message,'warn');return [];});
+}
+
+// ALPHA VANTAGE MARKET STATUS + TOP MOVERS
+function fetchAlphaVantageMarket() {
+  var key=(KEYS.alphavantage||'LLDVCFO94GTJNDM8').trim();
+  var el=addLog('AlphaVantage: market movers (key:'+key.slice(0,8)+'...)...','active');
+  return fetch('https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey='+key,{signal:AbortSignal.timeout(8000)})
+    .then(function(r){return r.json();}).then(function(d){
+      if(d.Information) throw new Error(d.Information.includes('demo')?'Get free key at alphavantage.co':'AV rate limit - resets tomorrow');
+      var items=[];
+      var updated=d.last_updated||'today';
+      (d.top_gainers||[]).slice(0,5).forEach(function(s){
+        items.push({rawTitle:'TOP GAINER: '+s.ticker+' +'+s.change_percentage+' (Vol: '+s.volume+')',
+                    rawDesc:'US stock top gainer. '+s.ticker+' gained '+s.change_percentage+' to $'+s.price+' with volume '+s.volume+'. Last updated: '+updated,
+                    link:'https://finance.yahoo.com/quote/'+s.ticker,
+                    pubDate:new Date().toISOString(),sourceName:'Alpha Vantage',sourceType:'federal',sourceLang:'English',isLive:true});
+      });
+      (d.top_losers||[]).slice(0,5).forEach(function(s){
+        items.push({rawTitle:'TOP LOSER: '+s.ticker+' '+s.change_percentage+' (Vol: '+s.volume+')',
+                    rawDesc:'US stock top loser. '+s.ticker+' fell '+s.change_percentage+' to $'+s.price+' with volume '+s.volume+'. Last updated: '+updated,
+                    link:'https://finance.yahoo.com/quote/'+s.ticker,
+                    pubDate:new Date().toISOString(),sourceName:'Alpha Vantage',sourceType:'federal',sourceLang:'English',isLive:true});
+      });
+      (d.most_actively_traded||[]).slice(0,5).forEach(function(s){
+        items.push({rawTitle:'MOST ACTIVE: '+s.ticker+' $'+s.price+' ('+s.change_percentage+')',
+                    rawDesc:'Most actively traded US stock. '+s.ticker+' at $'+s.price+' change: '+s.change_percentage+' volume: '+s.volume,
+                    link:'https://finance.yahoo.com/quote/'+s.ticker,
+                    pubDate:new Date().toISOString(),sourceName:'Alpha Vantage',sourceType:'federal',sourceLang:'English',isLive:true});
+      });
+      upLog(el,'v AlphaVantage market -- '+items.length+' movers','done');
+      return items;
+    }).catch(function(e){upLog(el,'! AlphaVantage market -- '+e.message,'warn');return [];});
+}
+
+// ALPHA VANTAGE TOPIC NEWS
+function fetchAlphaVantageTopic(topic, label) {
+  var key=(KEYS.alphavantage||'LLDVCFO94GTJNDM8').trim();
+  if(!key) return Promise.resolve([]);
+  var cacheKey='av_topic_'+topic.slice(0,10);
+  try{var c=sessionStorage.getItem(cacheKey);if(c){var el=addLog('AlphaVantage: '+label+' (cache)','active');upLog(el,'v AV '+label+' (cache)','done');return Promise.resolve(JSON.parse(c));}}catch(e){}
+  var el=addLog('AlphaVantage: '+label+'...','active');
+  return fetch('https://www.alphavantage.co/query?function=NEWS_SENTIMENT&topics='+encodeURIComponent(topic)+'&sort=LATEST&limit=20&apikey='+key,{signal:AbortSignal.timeout(10000)})
+    .then(function(r){return r.json();}).then(function(d){
+      if(d.Information) throw new Error('Demo key - get free key at alphavantage.co');
+      var items=(d.feed||[]).map(function(a){
+        return {rawTitle:a.title,rawDesc:a.summary||'',link:a.url,pubDate:a.time_published,
+                sourceName:a.source||'AlphaVantage',sourceType:'press',sourceLang:'English',isLive:true};
+      });
+      try{sessionStorage.setItem(cacheKey,JSON.stringify(items));}catch(e){}
+      upLog(el,'v AV '+label+' -- '+items.length+' articles','done');
+      return items;
+    }).catch(function(e){upLog(el,'! AV '+label+' -- '+e.message,'warn');return [];});
+}
+
+// BUILD ARTICLE HELPER
+function buildArticle(e,orig){
+  var srcUrls={
+    'Proto Thema':'https://www.protothema.gr/search/?w=',
+    'Protothema':'https://www.protothema.gr/search/?w=',
+    'Ethnos':'https://www.ethnos.gr/search/?w=',
+    'DW':'https://www.dw.com/search/?languageCode=en&item=',
+    'DW News':'https://www.dw.com/search/?languageCode=en&item=',
+    'BBC':'https://www.bbc.co.uk/search?q=',
+    'BBC World':'https://www.bbc.co.uk/search?q=',
+    'Al Jazeera':'https://www.aljazeera.com/search/',
+    'Reuters':'https://www.reuters.com/search/news?blob=',
+    'Ekathimerini':'https://www.ekathimerini.com/search/?w=',
+  };
+  orig=orig||{};
+  var sn=orig.sourceName||'Unknown';
+  var title=e.t||orig.rawTitle||'Untitled';
+  // AllSides articles include cross-perspective coverage
+  var isAllSides=sn==='AllSides'||sn==='AllSides (Balanced)';
+  var sb=srcUrls[sn];
+  var readUrl=(orig.link&&orig.link.startsWith('http'))?orig.link:
+    (sb?sb+encodeURIComponent(title.slice(0,50)):'https://news.google.com/search?q='+encodeURIComponent(title.slice(0,60))+'&hl=en&gl=US&ceid=US:en');
+  return {id:++uid,title:title,summary:e.s||orig.rawDesc||'',
+          readUrl:readUrl,sourceName:sn,sourceType:e.st||orig.sourceType||'press',
+          category:e.cat||'Politics',region:e.reg||'Global',country:e.co||'Global',
+          lang:e.ol||orig.sourceLang||'English',translated:!!e.tr,priority:e.p||'normal',
+          isLive:!!orig.isLive,pubDate:orig.pubDate||''};
+}
+
+// ENRICH WITH CLAUDE
+async function enrichArticles(raw){
+  if(!raw.length) return [];
+  var el=addLog('Claude: processing '+raw.length+' articles...','active');
+  var list=raw.slice(0,8).map(function(a,i){
+    return (i+1)+'|'+a.sourceLang+'|'+a.rawTitle.slice(0,80)+'|'+(a.rawDesc||'').slice(0,60);
+  }).join('\n\n');
+
+  var prompt='Classify these news articles. Return ONLY a JSON array, no markdown.\n'+'IMPORTANT: If any article mentions Amfissa, Fokida, Delphi, Itea, Galaxidi, Nafpaktos, Lamia, or Sterea Ellada, set co=\'Greece-Fokida\' and reg=\'Europe\'.\n'+
+    'Return ONLY a JSON array. No markdown, no code fences.\n\n'+
+    'Greek articles: keep in Greek. Other non-English: translate to English. tr=true only if translated.\n'+
+    '[{"i":1,"t":"title","s":"1-sentence summary","st":"press","cat":"Politics","reg":"Europe","co":"country","ol":"language","tr":false,"p":"normal"}]\n'+
+    'st=press/gov/federal/social/research | cat=Politics/Economy/Health/Science/Security/Climate/Technology/Conflict | reg=Europe/Americas/Asia/Middle East/Africa/Oceania/Global | p=high/normal/low | tr=true if originally non-English\n\n'+
+    'ARTICLES:\n'+list;
+
+  try{
+    var text=await claude(prompt);
+    // Strip any markdown fences
+    text=text.replace(/```json|```/gi,'').trim();
+    var start=text.indexOf('['),end=text.lastIndexOf(']');
+    if(start===-1||end===-1) {
+      // Try to extract individual objects if array brackets missing
+      var objs=[]; var depth=0,objStart=-1;
+      for(var ci=0;ci<text.length;ci++){
+        if(text[ci]==='{'){if(depth===0)objStart=ci;depth++;}
+        else if(text[ci]==='}'){depth--;if(depth===0&&objStart!==-1){try{objs.push(JSON.parse(text.slice(objStart,ci+1)));}catch(e){}objStart=-1;}}
+      }
+      if(objs.length) { upLog(el,'v Rescued '+objs.length+' articles','done'); return objs.map(function(e,idx){return buildArticle(e,raw[idx]||raw[0]);});}
+      throw new Error('No JSON found in response');
+    }
+    var enriched=JSON.parse(text.slice(start,end+1));
+    upLog(el,'v Enriched '+enriched.length+' articles','done');
+    return enriched.map(function(e,idx){return buildArticle(e,raw[(e.i||idx+1)-1]||raw[idx]||raw[0]);});
+  }catch(e){
+    var errMsg=e.message||'';
+    if(errMsg.indexOf('credit')!==-1||errMsg.indexOf('balance')!==-1){
+      upLog(el,'! Anthropic credits needed  -  go to console.anthropic.com -> Billing (using smart fallback)','warn');
+    } else {
+      upLog(el,'! Enrichment failed: '+errMsg.slice(0,60)+' (using smart fallback)','warn');
+    }
+    // Smart fallback: classify without Claude using keywords
+    return raw.slice(0,8).map(function(a){
+      var t=(a.rawTitle+' '+(a.rawDesc||'')).toLowerCase();
+      var cat='Politics';
+      if(/stock|nasdaq|dow|s&p|earning|revenue|gdp|inflation|fed |ecb|central bank|invest|crypto|bitcoin|ethereum|oil|gold|bond|yield|ipo|merger/i.test(t)) cat='Finance';
+      else if(/economy|trade|tariff|deficit|budget|fiscal|monetary|recession/i.test(t)) cat='Economy';
+      else if(/health|hospital|disease|virus|pandemic|vaccine|drug|pharma|cancer/i.test(t)) cat='Health';
+      else if(/climate|environment|energy|solar|wind|carbon|emission|flood|wildfire/i.test(t)) cat='Climate';
+      else if(/tech|artificial intelligence|software|cyber|chip|semiconductor|nvidia|apple|google/i.test(t)) cat='Technology';
+      else if(/war|military|conflict|attack|weapon|army|missile|troops/i.test(t)) cat='Conflict';
+      else if(/science|research|study|discover|space|nasa|quantum/i.test(t)) cat='Science';
+      var reg='Global';
+      if(/greece|greek|athens|ellada|ellad/i.test(t)) reg='Europe';
+      else if(/europe|european|germany|france|britain|italy|spain|brussels/i.test(t)) reg='Europe';
+      else if(/ us | usa |america|washington|wall street|federal reserve|congress/i.test(t)) reg='Americas';
+      else if(/china|japan|india|korea|asia|beijing|tokyo|shanghai/i.test(t)) reg='Asia';
+      else if(/middle east|israel|iran|saudi|dubai|turkey/i.test(t)) reg='Middle East';
+      else if(/africa|nigeria|egypt|kenya/i.test(t)) reg='Africa';
+      var p=/breaking|urgent|crash|collapse|surge|plunge|emergency|crisis/i.test(t)?'high':'normal';
+      var st=a.sourceType||'press';
+      if(/ecb|imf|world bank|treasury|bureau of labor|fed reserve/i.test(a.sourceName||'')) st='federal';
+      var readUrl=(a.link&&a.link.startsWith('http'))?a.link:'https://news.google.com/search?q='+encodeURIComponent((a.rawTitle||'').slice(0,60));
+      return {id:++uid,title:a.rawTitle,summary:(a.rawDesc||'').slice(0,200),
+              readUrl:readUrl,sourceName:a.sourceName,sourceType:st,
+              category:cat,region:reg,country:reg==='Europe'&&/greece|greek|athens/i.test(t)?'Greece':'Global',
+              lang:a.sourceLang,translated:false,priority:p,isLive:a.isLive,pubDate:a.pubDate||''};
+    });
+  }
+}
+
+// MAIN FETCH
+async function fetchAll(append){
+  // Reload all keys from localStorage at fetch time
+  try {
+    var _s=JSON.parse(localStorage.getItem('wp_keys')||'{}');
+    if(_s.anthropic)    KEYS.anthropic    = _s.anthropic;
+    if(_s.alphavantage) KEYS.alphavantage = _s.alphavantage;
+    if(_s.currents)     KEYS.currents     = _s.currents;
+    if(_s.thenews)      KEYS.thenews      = _s.thenews;
+    if(_s.newsdata)     KEYS.newsdata     = _s.newsdata;
+    if(_s.perigon)      KEYS.perigon      = _s.perigon;
+    if(_s.mediastack)   KEYS.mediastack   = _s.mediastack;
+  } catch(e){}
+  var btn=document.getElementById('fetch-btn');
+  btn.disabled=true; btn.textContent=' Fetching...';
+  if(!append){articles=[];uid=0;expanded={};briefs={};document.getElementById('log-wrap').innerHTML='';document.getElementById('stats').style.display='none';document.getElementById('more-btn').style.display='none';}
+  document.getElementById('prog').style.display='block';
+
+  var isGreece=activeTopic.indexOf('Greece')!==-1||activeTopic.indexOf('Amfissa')!==-1;
+  var isFinance=activeCountry==='finance';
+  var isAmfissa=activeTopic.indexOf('Amfissa')!==-1;
+  var q=activeTopic;
+  var fetches=[];
+
+  if(isAmfissa){
+    // Greek national RSS - only ones confirmed working
+    fetches.push(fetchRSS('https://www.protothema.gr/rss/','Proto Thema','press','Greek'));
+    fetches.push(fetchRSS('https://www.ethnos.gr/rss.xml','Ethnos','press','Greek'));
+    // TheNewsAPI - targeted Amfissa/Fokida queries
+    fetches.push(fetchTheNews('Amfissa Greece','Amfissa EN'));
+    fetches.push(fetchTheNews('Fokida Greece Delphi region','Fokida'));
+    fetches.push(fetchTheNews('central Greece Sterea Ellada','Sterea Ellada'));
+    fetches.push(fetchTheNews('Amfissa olive oil PDO Greece','Amfissa Olives'));
+    // Currents - Greek queries
+    fetches.push(fetchCurrents('Amfissa Fokida Greece','Amfissa Currents'));
+    fetches.push(fetchCurrents('Delphi Fokida central Greece','Delphi Region'));
+    // Perigon - targeted local
+    fetches.push(fetchPerigon('Amfissa Greece Fokida','Amfissa Perigon'));
+    fetches.push(fetchPerigon('Sterea Ellada central Greece municipality','Sterea Perigon'));
+    // Newsdata
+    fetches.push(fetchNewsdata('Amfissa Fokida Greece','Amfissa Newsdata'));
+    // AllSides for balanced perspective on Greek issues
+    fetches.push(fetchRSS('https://www.allsides.com/rss/news','AllSides','press','English'));
+    fetches.push(fetchRSS('https://www.corriere.it/rss/homepage.xml','Corriere della Sera','press','Italian'));
+    fetches.push(fetchRSS('https://feeds.elpais.com/mrss-s/pages/ep/site/english.elpais.com/portada','El Pais','press','Spanish'));
+    fetches.push(fetchRSS('https://www.dawn.com/feeds/home','Dawn Pakistan','press','English'));
+  } else if(isGreece){
+    fetches.push(fetchRSS('https://www.protothema.gr/rss/','Proto Thema','press','Greek'));
+    fetches.push(fetchRSS('https://www.ethnos.gr/rss.xml','Ethnos','press','Greek'));
+    fetches.push(fetchTheNews('Greece news today','Greece EN'));
+    fetches.push(fetchTheNews('Greece politics economy','Greece International'));
+    fetches.push(fetchRSS('https://www.allsides.com/rss/news','AllSides','press','English'));
+    fetches.push(fetchRSS('https://www.corriere.it/rss/homepage.xml','Corriere della Sera','press','Italian'));
+    fetches.push(fetchRSS('https://feeds.elpais.com/mrss-s/pages/ep/site/english.elpais.com/portada','El Pais','press','Spanish'));
+    fetches.push(fetchRSS('https://www.dawn.com/feeds/home','Dawn Pakistan','press','English'));
+  } else if(isFinance) {
+    // CONFIRMED WORKING RSS FEEDS
+    fetches.push(fetchRSS('https://www.cnbc.com/id/10000664/device/rss/rss.html','CNBC Finance','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/100003114/device/rss/rss.html','CNBC Markets','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/15839135/device/rss/rss.html','CNBC Investing','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/20910258/device/rss/rss.html','CNBC Economy','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/15839069/device/rss/rss.html','CNBC Earnings','press','English'));
+    fetches.push(fetchRSS('https://www.imf.org/en/News/rss?category=PressReleases','IMF Press Releases','federal','English'));
+    // Note: Greek RSS feeds skipped in Finance mode as they contain general news
+    // Greek finance covered by TheNewsAPI Greece Finance/Economy queries
+    // Additional confirmed CNBC topic feeds
+    fetches.push(fetchRSS('https://www.cnbc.com/id/100727362/device/rss/rss.html','CNBC World Economy','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/19854910/device/rss/rss.html','CNBC Tech','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/10000115/device/rss/rss.html','CNBC Real Estate','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/10000108/device/rss/rss.html','CNBC Health','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/15839069/device/rss/rss.html','CNBC Bonds','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/10001054/device/rss/rss.html','CNBC Wealth','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/21324812/device/rss/rss.html','CNBC Personal Finance','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/10000079/device/rss/rss.html','CNBC Private Equity','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/10000116/device/rss/rss.html','CNBC Retail','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/10000101/device/rss/rss.html','CNBC Autos','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/10000113/device/rss/rss.html','CNBC Biotech','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/10000739/device/rss/rss.html','CNBC Media','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/19794221/device/rss/rss.html','CNBC Asia Economy','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/10000115/device/rss/rss.html','CNBC Small Business','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/10000359/device/rss/rss.html','CNBC Futures','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/15839135/device/rss/rss.html','CNBC Currencies','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/10000108/device/rss/rss.html','CNBC Banks','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/10000110/device/rss/rss.html','CNBC Consumer','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/10000148/device/rss/rss.html','CNBC Defence','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/10000102/device/rss/rss.html','CNBC Luxury','press','English'));
+    fetches.push(fetchRSS('https://www.allsides.com/rss/news','AllSides (Balanced)','press','English'));
+    fetches.push(fetchRSS('https://rss.dw.com/rdf/rss-en-bus','DW Business','press','English'));
+    // Mediastack (needs free key from mediastack.com)
+    if(KEYS.mediastack) {
+      fetches.push(fetchMediastack('finance stock market','business','Mediastack Finance'));
+      fetches.push(fetchMediastack('central bank economy government','business','Mediastack Economy'));
+      fetches.push(fetchMediastack('cryptocurrency bitcoin ethereum','business','Mediastack Crypto'));
+    }
+    // Official data feeds (no key needed)
+    fetches.push(fetchECBData());
+    fetches.push(fetchCoinGeckoTrending());
+    fetches.push(fetchExchangeRates());
+    fetches.push(fetchAlphaVantageMarket());
+    fetches.push(fetchWorldBankData());
+    fetches.push(fetchBLSData());
+    // Alpha Vantage stock news (demo key works for testing)
+    // AlphaVantage - limited to 25 req/day free, use wisely
+    // Single broad ticker call + 2 topic calls = 3 requests max per fetch
+    fetches.push(fetchAlphaVantage('AAPL,NVDA,AMD,TSLA,JPM','Tech & Finance'));
+    fetches.push(fetchAlphaVantageTopic('financial_markets,earnings','Markets & Earnings'));
+    fetches.push(fetchAlphaVantageTopic('ipo,mergers_and_acquisitions','IPO & M&A'));
+    // Optional API keys
+    fetches.push(fetchCurrents('finance economy markets stocks','Finance'));
+    fetches.push(fetchCurrents('central bank interest rates government economy','Central Banks'));
+    fetches.push(fetchNewsdata('finance stocks economy markets','Finance'));
+    fetches.push(fetchNewsdata('central bank government economy policy','Gov Finance'));
+    fetches.push(fetchPerigon('finance stock market economy','Finance'));
+    fetches.push(fetchPerigon('central bank government bonds','Gov Finance'));
+    // TheNewsAPI - 5 broad queries to conserve daily limit (100/day free)
+    fetches.push(fetchTheNews('stock market economy Federal Reserve interest rates earnings','Global Markets'));
+    fetches.push(fetchTheNews('central bank ECB Bank of England IMF World Bank policy rates','Central Banks'));
+    fetches.push(fetchTheNews('oil energy commodities gold cryptocurrency Bitcoin Ethereum','Commodities & Crypto'));
+    fetches.push(fetchTheNews('semiconductor AI chip Nvidia AMD Intel technology stocks','Tech & Chips'));
+    fetches.push(fetchTheNews('Greece economy Athens bonds EU eurozone GDP','Greece Finance'));
+  } else {
+    // RSS - confirmed CORS-open
+    fetches.push(fetchRSS('https://www.protothema.gr/rss/','Proto Thema','press','Greek'));
+    fetches.push(fetchRSS('https://www.ethnos.gr/rss.xml','Ethnos','press','Greek'));
+    // DW - 6 feeds confirmed working
+    fetches.push(fetchRSS('https://rss.dw.com/rdf/rss-en-all','DW News','press','English'));
+    fetches.push(fetchRSS('https://rss.dw.com/rdf/rss-en-world','DW World','press','English'));
+    fetches.push(fetchRSS('https://rss.dw.com/rdf/rss-en-eu','DW Europe','press','English'));
+    fetches.push(fetchRSS('https://rss.dw.com/rdf/rss-en-top','DW Top Stories','press','English'));
+    fetches.push(fetchRSS('https://rss.dw.com/rdf/rss-en-bus','DW Business','press','English'));
+    fetches.push(fetchRSS('https://rss.dw.com/rdf/rss-en-cul','DW Culture','press','English'));
+    fetches.push(fetchRSS('https://rss.dw.com/rdf/rss-de-all','DW German','press','German'));
+    // CNBC - 6 feeds confirmed working
+    fetches.push(fetchRSS('https://www.cnbc.com/id/100003114/device/rss/rss.html','CNBC','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/100727362/device/rss/rss.html','CNBC World','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/10000113/device/rss/rss.html','CNBC Politics','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/10000108/device/rss/rss.html','CNBC Science','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/10000652/device/rss/rss.html','CNBC Sports','press','English'));
+    fetches.push(fetchRSS('https://www.cnbc.com/id/10001119/device/rss/rss.html','CNBC Travel','press','English'));
+    // Other confirmed sources
+    fetches.push(fetchRSS('https://www.nasa.gov/news-release/feed/','NASA','research','English'));
+    fetches.push(fetchRSS('https://www.allsides.com/rss/news','AllSides','press','English'));
+    fetches.push(fetchRSS('https://www.corriere.it/rss/homepage.xml','Corriere della Sera','press','Italian'));
+    fetches.push(fetchRSS('https://feeds.elpais.com/mrss-s/pages/ep/site/english.elpais.com/portada','El Pais','press','Spanish'));
+    fetches.push(fetchRSS('https://www.dawn.com/feeds/home','Dawn Pakistan','press','English'));
+    // TheNewsAPI - worldwide coverage by region
+    fetches.push(fetchTheNews('breaking news world today','World Breaking'));
+    fetches.push(fetchTheNews('United States America Trump White House politics','USA'));
+    fetches.push(fetchTheNews('United Kingdom Britain parliament economy London','UK'));
+    fetches.push(fetchTheNews('Europe EU eurozone Germany France Italy Spain','Europe'));
+    fetches.push(fetchTheNews('Russia Ukraine war military Kremlin Putin','Russia/Ukraine'));
+    fetches.push(fetchTheNews('China Beijing Xi Jinping economy trade Taiwan','China'));
+    fetches.push(fetchTheNews('Middle East Israel Gaza Iran Saudi Arabia','Middle East'));
+    fetches.push(fetchTheNews('Africa Nigeria Kenya South Africa Egypt Ethiopia','Africa'));
+    fetches.push(fetchTheNews('India Pakistan Asia South Korea Japan Indonesia','South Asia'));
+    fetches.push(fetchTheNews('Latin America Brazil Mexico Argentina Colombia','Latin America'));
+    // Currents - regional
+    fetches.push(fetchCurrents('world breaking news today politics','World Currents'));
+    fetches.push(fetchCurrents('Europe EU politics economy society','Europe Currents'));
+    fetches.push(fetchCurrents('Asia Pacific China Japan India news','Asia Currents'));
+    fetches.push(fetchCurrents('Middle East Africa Latin America news','Global South'));
+    // Perigon - worldwide
+    fetches.push(fetchPerigon('breaking world news politics diplomacy','World Perigon'));
+    fetches.push(fetchPerigon('United States politics economy society','US Perigon'));
+    fetches.push(fetchPerigon('Europe politics economy conflict','Europe Perigon'));
+    fetches.push(fetchPerigon('Asia Africa Latin America world news','Global Perigon'));
+    // Newsdata - global
+    fetches.push(fetchNewsdata('world news today breaking','World Newsdata'));
+    fetches.push(fetchNewsdata('international politics conflict economy','Intl Newsdata'));
+
+  }
+
+  var results=await Promise.allSettled(fetches);
+  var raw=[];
+  results.forEach(function(r){if(r.status==='fulfilled') raw=raw.concat(r.value);});
+
+  // Deduplicate
+  var seen=new Set();
+  raw=raw.filter(function(a){var k=a.rawTitle.slice(0,40).toLowerCase();if(seen.has(k))return false;seen.add(k);return true;});
+  addLog('Fetched '+raw.length+' unique live articles','done');
+
+  if(!raw.length){addLog('No articles fetched. Check your API keys.','err');btn.disabled=false;btn.textContent=' Fetch Live News';return;}
+
+  // Enrich all batches in parallel for speed
+  var batchPromises=[];
+  for(var i=0;i<raw.length;i+=8){ batchPromises.push(enrichArticles(raw.slice(i,i+8))); }
+  var batchResults=await Promise.all(batchPromises);
+  var enriched=[];
+  batchResults.forEach(function(b){enriched=enriched.concat(b);});
+
+  if(append){
+    var ex=new Set(articles.map(function(a){return a.title.slice(0,40).toLowerCase();}));
+    enriched=enriched.filter(function(a){return !ex.has(a.title.slice(0,40).toLowerCase());});
+    articles=articles.concat(enriched);
+  } else { articles=enriched; }
+
+  // Deduplicate by title again after enrichment
+  var seenTitles=new Set();
+  articles=articles.filter(function(a){
+    var k=a.title.slice(0,50).toLowerCase();
+    if(seenTitles.has(k)) return false;
+    seenTitles.add(k); return true;
+  });
+
+  addLog('v Feed ready  -  '+articles.length+' articles displayed','done');
+  updateStats(); updateTicker(); updateRegions(); updateTrends(); renderFeed();
+  document.getElementById('stats').style.display='flex';
+  document.getElementById('more-btn').style.display='inline-flex';
+  document.getElementById('refresh-btn').style.display='inline-flex';
+  document.getElementById('fetch-status').textContent=articles.length+' articles . '+new Date().toLocaleTimeString();
+  setTimeout(function(){document.getElementById('prog').style.display='none';},4000);
+  btn.disabled=false; btn.textContent=' Fetch Live News';
+}
+
+// RENDER
+function sc(t){return{press:'s-press',gov:'s-gov',federal:'s-federal',social:'s-social',research:'s-research'}[t]||'s-press';}
+function sl(t){return{press:'NEWS Press',gov:'GOV Gov',federal:'INTL Federal',social:'SOC Social',research:'RES Research'}[t]||'NEWS';}
+function tAgo(pub){
+  if(!pub) return '';
+  try{
+    // Handle Alpha Vantage format: "20240103T120000"
+    if(/^\d{8}T\d{6}/.test(pub)) {
+      pub = pub.slice(0,4)+'-'+pub.slice(4,6)+'-'+pub.slice(6,8)+'T'+pub.slice(9,11)+':'+pub.slice(11,13)+':'+pub.slice(13,15);
+    }
+    var d=new Date(pub);
+    if(isNaN(d.getTime())) return '';
+    var diff=Math.floor((Date.now()-d)/60000);
+    if(diff<1)return 'just now';
+    if(diff<60)return diff+'m ago';
+    if(diff<1440){
+      var h=Math.floor(diff/60),m=diff%60;
+      return h+'h'+(m>0?' '+m+'m':'')+' ago';
+    }
+    if(diff<10080) return Math.floor(diff/1440)+'d ago';
+    // Show actual date for older articles
+    return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  }catch(e){return '';}
+}
+function renderFeed(){
+  var q=(document.getElementById('search-in').value||'').toLowerCase();
+  var FINANCE_CATS=['Economy','Finance','Markets','Technology','Security'];
+  var list=articles.filter(function(a){
+    if(fSrc!=='all'&&a.sourceType!==fSrc)return false;
+    if(fCat&&a.category!==fCat)return false;
+    if(fReg&&a.region!==fReg)return false;
+    if(fBrk&&a.priority!=='high')return false;
+    if(fTrn&&!a.translated)return false;
+    if(fRl&&!a.isLive)return false;
+    // When Finance chip active, filter to finance-relevant categories only
+    if(activeCountry==='finance'&&!fCat&&FINANCE_CATS.indexOf(a.category)===-1)return false;
+    if(q&&!a.title.toLowerCase().includes(q)&&!(a.summary||'').toLowerCase().includes(q))return false;
+    return true;
+  }).sort(function(a,b){
+    // Sort: Breaking first, then by publication time newest to oldest
+    if(a.priority==='high'&&b.priority!=='high') return -1;
+    if(b.priority==='high'&&a.priority!=='high') return 1;
+    // Parse dates - handle multiple formats
+    function parseDate(d) {
+      if(!d) return 0;
+      // Alpha Vantage format: "20240103T120000"
+      if(/^\d{8}T\d{6}/.test(d)) {
+        d = d.slice(0,4)+'-'+d.slice(4,6)+'-'+d.slice(6,8)+'T'+d.slice(9,11)+':'+d.slice(11,13)+':'+d.slice(13,15);
+      }
+      var t = new Date(d).getTime();
+      return isNaN(t) ? 0 : t;
+    }
+    var da=parseDate(a.pubDate);
+    var db=parseDate(b.pubDate);
+    if(da&&db) return db-da;
+    if(da) return -1;
+    if(db) return 1;
+    return 0;
+  });
+  var feed=document.getElementById('feed');
+  if(!list.length){feed.innerHTML='<div class="empty"><div class="empty-ic"></div><div class="empty-ti">No results</div><div class="empty-su">Adjust filters or search.</div></div>';return;}
+  feed.innerHTML='<div class="cards">'+list.map(cardHTML).join('')+'</div>';
+}
+function cardHTML(a){
+  var exp=expanded[a.id];
+  return '<div class="card'+(a.priority==='high'?' hi':'')+'" id="card-'+a.id+'">'+
+    '<div class="cm">'+
+      '<span class="stag '+sc(a.sourceType)+'">'+sl(a.sourceType)+'</span>'+
+      '<span class="ctag">'+a.category+'</span>'+
+      (a.priority==='high'?'<span class="btag">* BREAKING</span>':'')+
+      (a.isLive?'<span class="rl-badge">LIVE</span>':'')+
+      (a.sourceName&&a.sourceName.indexOf('AllSides')!==-1?'<span style="font-size:9px;color:#a78bfa;border:1px solid #a78bfa;padding:1px 5px;border-radius:3px;font-weight:600">= BALANCED</span>':'')+
+      (a.translated?'<span class="ltag">INTL '+a.lang+'</span>':'')+
+      '<span class="atm">'+tAgo(a.pubDate)+'</span>'+
+    '</div>'+
+    '<div class="ctitle"><a href="'+a.readUrl+'" target="_blank" rel="noopener">'+a.title+'</a></div>'+
+    '<div class="csum">'+a.summary+'</div>'+
+    '<div class="cfoot">'+
+      '<span class="cloc"> '+a.country+' . '+a.region+'</span>'+
+      '<span class="csrc">'+a.sourceName+'</span>'+
+      '<div style="display:flex;gap:5px;margin-left:auto;flex-wrap:wrap;">'+
+        '<a class="abtn" href="'+a.readUrl+'" target="_blank" rel="noopener"> Read</a>'+
+        '<button class="abtn" onclick="loadBrief('+a.id+')">'+(exp?'Close ^':'AI Brief')+'</button>'+
+      '</div>'+
+    '</div>'+
+    (exp?'<div class="cexp">'+(briefs[a.id]||'<span style="color:var(--muted)">Generating...</span>')+'</div>':'')+
+  '</div>';
+}
+async function loadBrief(id){
+  if(expanded[id]){delete expanded[id];renderFeed();return;}
+  expanded[id]=true; renderFeed();
+  if(!briefs[id]){
+    var a=articles.find(function(x){return x.id===id;});
+    if(!a)return;
+    try{var t=await claude('Write a 4-sentence intelligence brief on this real news story: "'+a.title+'" ('+a.country+', '+a.category+', '+a.sourceName+'). Cover context, key actors, significance, and what happens next. Plain prose, no bullet points.');briefs[id]=t;}
+    catch(e){briefs[id]='Brief unavailable.';}
+    renderFeed();
+  }
+}
+
+// FILTERS
+function setSF(v,el){fSrc=v;document.querySelectorAll('[data-sf]').forEach(function(b){b.classList.remove('on');});el.classList.add('on');renderFeed();}
+function setCat(v,el){fCat=fCat===v?null:v;document.querySelectorAll('.fb').forEach(function(b){if(b!==el&&!b.dataset.sf)b.classList.remove('on');});el.classList.toggle('on',fCat===v);renderFeed();}
+function setReg(v,el){fReg=fReg===v?null:v;document.querySelectorAll('.rcard').forEach(function(c){c.classList.remove('on');});if(fReg)el.classList.add('on');renderFeed();}
+function toggleF(f){
+  if(f==='brk'){fBrk=!fBrk;document.getElementById('brk-btn').classList.toggle('on',fBrk);}
+  else if(f==='trn'){fTrn=!fTrn;document.getElementById('trn-btn').classList.toggle('on',fTrn);}
+  else if(f==='rl'){fRl=!fRl;document.getElementById('rl-btn').classList.toggle('on',fRl);}
+  renderFeed();
+}
+function setChip(el,topic,country){
+  document.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});
+  el.classList.add('on'); activeTopic=topic; activeCountry=country;
+  var gp=document.getElementById('greek-panel');
+  if(gp) gp.style.display=(topic.indexOf('Greece')!==-1||topic.indexOf('Amfissa')!==-1)?'block':'none';
+  var mp=document.getElementById('macro-panel');
+  if(mp) mp.style.display=(country==='finance')?'block':'none';
+}
+
+// STATS
+function updateStats(){
+  document.getElementById('s-tot').textContent=articles.length;
+  document.getElementById('s-live').textContent=articles.filter(function(a){return a.isLive;}).length;
+  document.getElementById('s-src').textContent=new Set(articles.map(function(a){return a.sourceName;})).size;
+  document.getElementById('s-trn').textContent=articles.filter(function(a){return a.translated;}).length;
+  document.getElementById('s-brk').textContent=articles.filter(function(a){return a.priority==='high';}).length;
+  ['press','gov','federal','social','research'].forEach(function(t){var el=document.getElementById('fc-'+t);if(el)el.textContent=articles.filter(function(a){return a.sourceType===t;}).length;});
+  var al=document.getElementById('fc-all');if(al)al.textContent=articles.length;
+}
+function updateRegions(){
+  [['Europe','Europe'],['Americas','Americas'],['Asia','Asia'],['Middle East','MiddleEast'],['Africa','Africa'],['Oceania','Oceania']].forEach(function(r){
+    var el=document.getElementById('rn-'+r[1]);if(el)el.textContent=articles.filter(function(a){return a.region===r[0];}).length+' stories';
+  });
+}
+function updateTicker(){
+  var hi=articles.filter(function(a){return a.priority==='high';}).slice(0,8);
+  var src=hi.length?hi:articles.slice(0,8); if(!src.length)return;
+  var html=src.concat(src).map(function(a){return '<span class="ti"><span class="ti-src">'+a.sourceName+'</span>'+a.title+'</span><span style="color:var(--dim);margin:0 12px">.</span>';}).join('');
+  document.getElementById('ticker').innerHTML=html;
+}
+function updateTrends(){
+  var cats={};articles.forEach(function(a){cats[a.category]=(cats[a.category]||0)+1;});
+  var s=Object.entries(cats).sort(function(a,b){return b[1]-a[1];});
+  document.getElementById('trends').innerHTML=s.slice(0,7).map(function(x,i){
+    return '<div class="trow"><span class="tr-k">'+String(i+1).padStart(2,'0')+'</span><span class="tr-t">'+x[0]+'</span><span class="tr-n">^'+x[1]+'</span></div>';
+  }).join('')||'<div style="font-size:11px;color:var(--dim)">No data</div>';
+}
+
+// ANALYST
+async function askAnalyst(){
+  var q=document.getElementById('analyst-q').value.trim();if(!q)return;
+  var resp=document.getElementById('analyst-r');resp.textContent=' Analysing...';
+  // Include relevant articles from feed + knowledge
+  var allTitles=articles.map(function(a){return '['+a.sourceName+'] '+a.title;});
+  var relevant=allTitles.filter(function(t){
+    var words=q.toLowerCase().split(' ');
+    return words.some(function(w){return w.length>3&&t.toLowerCase().indexOf(w)!==-1;});
+  });
+  var ctx=relevant.length?'Relevant headlines from live feed:\n'+relevant.join('\n'):'Live feed headlines:\n'+allTitles.slice(0,8).join('\n');
+  var prompt='You are a senior analyst with expertise in geopolitics, finance, markets, and current events.\n\n'+
+    ctx+'\n\n'+
+    'User question: '+q+'\n\n'+
+    'Answer in 4-5 sentences using both the live headlines above AND your knowledge up to your training cutoff. '+
+    'If the question is about a specific stock, company, or financial instrument not in the headlines, provide analysis based on your knowledge of that asset, sector trends, and relevant context. '+
+    'Be specific and precise. Do not say you cannot access real-time data  -  give the best answer you can.';
+  try{var t=await claude(prompt);resp.textContent=t;}
+  catch(e){resp.textContent='Error: '+e.message;}
+}
+
+// UTILS
+function exportJSON(){
+  var blob=new Blob([JSON.stringify(articles,null,2)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='worldpulse-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+}
+function clearCache(){
+  try{
+    Object.keys(sessionStorage).forEach(function(k){
+      if(k.startsWith('tnews_')||k.startsWith('curr_')||k.startsWith('peri_')) sessionStorage.removeItem(k);
+    });
+  }catch(e){}
+}
+function clearFeed(){articles=[];expanded={};briefs={};renderFeed();updateStats();updateTrends();updateRegions();document.getElementById('stats').style.display='none';document.getElementById('more-btn').style.display='none';document.getElementById('refresh-btn').style.display='none';}
+
+</script>
+</body>
+</html>
