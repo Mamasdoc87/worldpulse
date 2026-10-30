@@ -200,6 +200,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
     <div style="font-size:11px;color:#3a4a60;line-height:1.6;margin-bottom:10px;">Store keys in a private <a href="https://gist.github.com" target="_blank" style="color:#00b4d8;">GitHub Gist</a>. Get token at <a href="https://github.com/settings/tokens/new?scopes=gist&description=WorldPulse" target="_blank" style="color:#00b4d8;">github.com/settings/tokens</a> — select <strong style="color:#6b7f99;">gist</strong> scope only.</div>
     <input id="gh-token" type="text" autocomplete="off"  autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" name="wp-gh-token-x" placeholder="GitHub token: ghp_..." style="-webkit-text-security:disc;width:100%;background:#0a0d12;border:1px solid #1e2d42;border-radius:6px;padding:9px 12px;color:#e8edf4;font-family:monospace;font-size:12px;outline:none;margin-bottom:7px;box-sizing:border-box;">
     <input id="gh-gist-id" type="text" placeholder="Gist ID (auto-filled after first Save)" style="width:100%;background:#0a0d12;border:1px solid #1e2d42;border-radius:6px;padding:9px 12px;color:#e8edf4;font-family:monospace;font-size:12px;outline:none;margin-bottom:10px;box-sizing:border-box;">
+    <input id="gh-pass" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" name="wp-pass-x" placeholder="Passphrase (encrypts your Anthropic key in the cloud)" style="-webkit-text-security:disc;width:100%;background:#0a0d12;border:1px solid #1e2d42;border-radius:6px;padding:9px 12px;color:#e8edf4;font-family:monospace;font-size:12px;outline:none;margin-bottom:10px;box-sizing:border-box;">
     <div style="display:flex;gap:8px;">
       <button onclick="wpSaveCloud()" style="flex:1;background:#2a9d8f;color:#fff;border:none;border-radius:6px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">&#9729; Save to Cloud</button>
       <button onclick="wpLoadCloud()" style="flex:1;background:#0077b6;color:#fff;border:none;border-radius:6px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">&#8681; Load from Cloud</button>
@@ -451,13 +452,40 @@ function showSetup() {
 }
 
 // -- CLOUD SYNC ----------------------------------------------------------------
+
+function wpB64(buf){var b=new Uint8Array(buf),s='';for(var i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);return btoa(s);}
+function wpUnB64(t){var s=atob(t),b=new Uint8Array(s.length);for(var i=0;i<s.length;i++)b[i]=s.charCodeAt(i);return b;}
+function wpDeriveKey(pass,salt){
+  var enc=new TextEncoder();
+  return crypto.subtle.importKey('raw',enc.encode(pass),'PBKDF2',false,['deriveKey']).then(function(km){
+    return crypto.subtle.deriveKey({name:'PBKDF2',salt:salt,iterations:200000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+  });
+}
+function wpEncrypt(text,pass){
+  var salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
+  return wpDeriveKey(pass,salt).then(function(k){return crypto.subtle.encrypt({name:'AES-GCM',iv:iv},k,new TextEncoder().encode(text));})
+   .then(function(ct){return {v:1,s:wpB64(salt),i:wpB64(iv),c:wpB64(ct)};});
+}
+function wpDecrypt(obj,pass){
+  return wpDeriveKey(pass,wpUnB64(obj.s)).then(function(k){return crypto.subtle.decrypt({name:'AES-GCM',iv:wpUnB64(obj.i)},k,wpUnB64(obj.c));})
+   .then(function(pt){return new TextDecoder().decode(pt);});
+}
+
 function wpSaveCloud() {
   var token = (document.getElementById('gh-token').value||'').trim();
   var gistId = (document.getElementById('gh-gist-id').value||'').trim();
   if(!token) { wpCloudMsg('Enter your GitHub token first.', false); return; }
   wpCloudMsg('Saving to cloud...', true);
   var keys = wpGetKeys();
+  var anth = keys.anthropic || '';
   try { delete keys.anthropic; } catch(e){}
+  var pass = (document.getElementById('gh-pass').value||'').trim();
+  var pre = Promise.resolve(null);
+  if(anth && pass){ pre = wpEncrypt(anth, pass); }
+  else if(anth && !pass){ wpCloudMsg('Saved without the Anthropic key. Add a passphrase to store it encrypted.', true); }
+  pre.then(function(enc){ if(enc) keys.anthropic_enc = enc; wpDoSave(token,gistId,keys); }).catch(function(e){ wpCloudMsg('Encryption error: '+e.message, false); });
+}
+function wpDoSave(token,gistId,keys){
   var body = JSON.stringify({
     description: 'WorldPulse API Keys',
     public: false,
@@ -476,7 +504,7 @@ function wpSaveCloud() {
       if(d.id) {
         document.getElementById('gh-gist-id').value = d.id;
         try { localStorage.setItem('wp_gh_token',token); localStorage.setItem('wp_gh_gist',d.id); } catch(e){}
-        wpCloudMsg('Saved to cloud (without the Anthropic key). Gist ID: '+d.id, true);
+        wpCloudMsg('Saved to cloud'+(keys.anthropic_enc?' (Anthropic key encrypted)':' (without the Anthropic key)')+'. Gist ID: '+d.id, true);
       } else { wpCloudMsg('Error: '+(d.message||'Unknown'), false); }
     } catch(e) { wpCloudMsg('Parse error: '+e.message, false); }
   };
@@ -484,6 +512,20 @@ function wpSaveCloud() {
   xhr.timeout = 10000;
   xhr.ontimeout = function() { wpCloudMsg('Timeout - try again.', false); };
   xhr.send(body);
+}
+
+function wpFinishLoad(keys,token,gistId,msg){
+  wpFillKeys(keys);
+  if(keys.anthropic)    KEYS.anthropic    = keys.anthropic;
+  if(keys.thenews)      KEYS.thenews      = keys.thenews;
+  if(keys.currents)     KEYS.currents     = keys.currents;
+  if(keys.newsdata)     KEYS.newsdata     = keys.newsdata;
+  if(keys.perigon)      KEYS.perigon      = keys.perigon;
+  if(keys.alphavantage) KEYS.alphavantage = keys.alphavantage;
+  if(keys.mediastack)   KEYS.mediastack   = keys.mediastack;
+  var store={}; for(var n in keys){ if(n!=='anthropic_enc') store[n]=keys[n]; }
+  try { localStorage.setItem('wp_keys', JSON.stringify(store)); localStorage.setItem('wp_gh_token',token); localStorage.setItem('wp_gh_gist',gistId); } catch(e){}
+  wpCloudMsg(msg||'Keys loaded (the Anthropic key is not in the cloud - paste it, or add a passphrase). Click Launch.', true);
 }
 
 function wpLoadCloud() {
@@ -503,7 +545,19 @@ function wpLoadCloud() {
         var keys = JSON.parse(d.files['worldpulse-keys.json'].content);
         var localAnth = (document.getElementById('k-anthropic').value||'').trim();
         if(!localAnth){ try{ localAnth = (JSON.parse(localStorage.getItem('wp_keys')||'{}').anthropic)||''; }catch(e){} }
+        var passL = (document.getElementById('gh-pass').value||'').trim();
+        if(keys.anthropic_enc && passL){
+          wpDecrypt(keys.anthropic_enc, passL).then(function(a){
+            keys.anthropic = a; wpFinishLoad(keys,token,gistId,'Keys loaded, Anthropic key decrypted. Click Launch.');
+          }).catch(function(){
+            keys.anthropic = localAnth; wpFinishLoad(keys,token,gistId,'Wrong passphrase - other keys loaded, Anthropic key NOT loaded.');
+          });
+          return;
+        }
         keys.anthropic = localAnth;
+        if(keys.anthropic_enc && !passL){ wpFinishLoad(keys,token,gistId,'Keys loaded. Enter your passphrase and press Load again to unlock the Anthropic key.'); return; }
+        wpFinishLoad(keys,token,gistId,null);
+        return;
         wpFillKeys(keys);
         // Also set KEYS object directly
         if(keys.anthropic)    KEYS.anthropic    = keys.anthropic;
